@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>던전 오브 팀즈 — 참가자</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0f0f1a;
+      color: white;
+      font-family: Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    h1 { color: #ffd700; font-size: 24px; margin-bottom: 4px; text-align: center; }
+    .subtitle { color: #aaa; font-size: 14px; margin-bottom: 24px; }
+
+    /* ── 직업 선택 ── */
+    #jobScreen { width: 100%; max-width: 500px; }
+    .job-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 16px; }
+    .job-card {
+      background: #1a1a2e; border: 2px solid #333; border-radius: 12px;
+      padding: 16px 8px; text-align: center; cursor: pointer;
+      transition: all 0.2s; position: relative;
+    }
+    .job-card:hover { border-color: #ffd700; transform: scale(1.04); }
+    .job-card.selected { border-color: #ffd700; background: #2a2a1e; }
+    .job-card.random-card { border-color: #9b59b6; background: #1a0a2e; }
+    .job-card.random-card:hover { border-color: #d98df5; }
+    .job-card.hidden-card { border-color: #444; background: #111; cursor: not-allowed; opacity: 0.6; }
+    .job-card.hidden-card:hover { transform: none; border-color: #444; }
+    .job-illust {
+      width: 64px; height: 64px; margin: 0 auto 8px;
+      border-radius: 10px; display: flex; align-items: center;
+      justify-content: center; font-size: 36px; background: #ffffff10;
+    }
+    .job-name  { font-size: 14px; font-weight: bold; color: #ffd700; margin-bottom: 4px; }
+    .job-card.hidden-card .job-name { color: #666; }
+    .job-card.random-card .job-name { color: #d98df5; }
+    .job-desc  { font-size: 10px; color: #999; line-height: 1.4; }
+    .job-skill { font-size: 10px; color: #7ecfff; margin-top: 6px; }
+    .job-card.random-card .job-skill { color: #d98df5; }
+    .lock-badge { position: absolute; top: 8px; right: 8px; font-size: 14px; }
+
+    .selected-job-bar {
+      width: 100%; max-width: 500px; margin-top: 12px;
+      background: #1a1a2e; border: 1px solid #ffd70055;
+      border-radius: 10px; padding: 10px 16px;
+      display: none; align-items: center; gap: 10px;
+    }
+    .selected-job-bar.show { display: flex; }
+
+    #teamNameSection { width: 100%; max-width: 500px; margin-top: 16px; display: none; }
+    #teamNameSection p { color: #aaa; font-size: 13px; margin-bottom: 6px; }
+    #teamNameSection input {
+      width: 100%; padding: 12px; font-size: 16px;
+      border-radius: 8px; border: 2px solid #333;
+      background: #1a1a2e; color: white;
+    }
+    #teamNameSection input:focus { outline: none; border-color: #ffd700; }
+
+    .confirm-btn {
+      width: 100%; max-width: 500px; margin-top: 12px; padding: 14px;
+      font-size: 18px; font-weight: bold; background: #ffd700;
+      color: #0f0f1a; border: none; border-radius: 12px;
+      cursor: pointer; display: none;
+    }
+    .confirm-btn:hover { background: #ffec6e; }
+
+    /* ── 랜덤 팝업 ── */
+    #randomPopup {
+      display: none; position: fixed; inset: 0;
+      background: #000000cc; z-index: 100;
+      align-items: center; justify-content: center; flex-direction: column;
+    }
+    #randomPopup.show { display: flex; }
+    .popup-box {
+      background: #1a1a2e; border: 3px solid #ffd700;
+      border-radius: 20px; padding: 36px 40px; text-align: center;
+      animation: popIn 0.3s ease; max-width: 320px; width: 90%;
+    }
+    .popup-box.pirate-popup { border-color: #e74c3c; }
+    @keyframes popIn { from{transform:scale(0.7);opacity:0} to{transform:scale(1);opacity:1} }
+    .popup-illust { font-size: 64px; margin-bottom: 12px; }
+    .popup-job-name { font-size: 28px; font-weight: bold; color: #ffd700; margin-bottom: 6px; }
+    .popup-box.pirate-popup .popup-job-name { color: #e74c3c; }
+    .popup-hidden-badge {
+      display: inline-block; background: #e74c3c; color: white;
+      font-size: 11px; font-weight: bold; padding: 3px 12px;
+      border-radius: 999px; margin-bottom: 10px; letter-spacing: 1px;
+    }
+    .popup-desc  { font-size: 13px; color: #ccc; line-height: 1.6; margin-bottom: 8px; }
+    .popup-skill { font-size: 12px; color: #7ecfff; margin-bottom: 20px; }
+    .popup-box.pirate-popup .popup-skill { color: #f39c12; }
+    .popup-confirm {
+      background: #ffd700; color: #0f0f1a; border: none;
+      padding: 12px 32px; font-size: 16px; font-weight: bold;
+      border-radius: 10px; cursor: pointer;
+    }
+    .popup-box.pirate-popup .popup-confirm { background: #e74c3c; color: white; }
+
+    /* ── 메인 게임 화면 (참가 후) ── */
+    #gameScreen { display: none; width: 100%; max-width: 500px; }
+
+    /* 팀 정보 카드 */
+    .team-info-box {
+      background: #1a1a2e; border: 2px solid #ffd700;
+      border-radius: 16px; padding: 20px; margin-bottom: 16px;
+    }
+    .team-info-box.pirate-box { border-color: #e74c3c; }
+    .team-info-top { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+    .team-job-img { font-size: 48px; }
+    .team-info-text { flex: 1; }
+    .team-name-display { font-size: 20px; font-weight: bold; color: white; }
+    .team-job-display  { font-size: 13px; color: #aaa; margin-top: 2px; }
+    .team-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .stat-box {
+      background: #0f0f1a; border-radius: 8px; padding: 8px;
+      text-align: center;
+    }
+    .stat-val   { font-size: 18px; font-weight: bold; color: #ffd700; }
+    .stat-label { font-size: 10px; color: #aaa; margin-top: 2px; }
+
+    /* 페이즈 상태 배너 */
+    .phase-box {
+      border-radius: 12px; padding: 16px; margin-bottom: 16px;
+      text-align: center;
+    }
+    .phase-box.selecting { background: #1a2e1a; border: 2px solid #2ecc71; }
+    .phase-box.selected  { background: #2e2a1a; border: 2px solid #ffd700; }
+    .phase-box.judging   { background: #1a1a2e; border: 2px solid #3498db; }
+    .phase-box.myjudge   { background: #2e1a0a; border: 2px solid #e67e22; }
+    .phase-box.waiting   { background: #1a1a2e; border: 2px solid #555; }
+    .phase-icon  { font-size: 36px; margin-bottom: 8px; }
+    .phase-title { font-size: 16px; font-weight: bold; margin-bottom: 4px; }
+    .phase-desc  { font-size: 12px; color: #aaa; line-height: 1.6; }
+
+    /* ── 액션 선택 ── */
+    #actionSection { display: none; }
+    .action-title { font-size: 16px; color: #ffd700; margin-bottom: 4px; text-align: center; font-weight: bold; }
+    .action-hint  { font-size: 11px; color: #666; text-align: center; margin-bottom: 12px; }
+    .action-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .action-card {
+      background: #1a1a2e; border: 2px solid #333;
+      border-radius: 12px; padding: 14px 10px;
+      text-align: center; cursor: pointer; transition: all 0.2s;
+    }
+    .action-card:hover { border-color: #ffd700; transform: scale(1.02); }
+    .action-card.pirate-action { border-color: #e74c3c44; }
+    .action-card.pirate-action:hover { border-color: #e74c3c; }
+    .action-card.disabled-card { opacity: 0.4; cursor: not-allowed; }
+    .action-card.disabled-card:hover { transform: none; border-color: #333; }
+    .action-icon { font-size: 30px; margin-bottom: 6px; }
+    .action-name { font-size: 14px; font-weight: bold; color: #ffd700; margin-bottom: 4px; }
+    .action-card.pirate-action .action-name { color: #e74c3c; }
+    .action-summary { font-size: 10px; line-height: 1.5; margin-top: 6px; padding-top: 6px; border-top: 1px solid #ffffff11; }
+    .sum-ok  { color: #2ecc71; }
+    .sum-bad { color: #e74c3c; }
+
+    /* ── 상세 팝업 ── */
+    #detailPopup {
+      display: none; position: fixed; inset: 0;
+      background: #000000bb; z-index: 200;
+      align-items: flex-end; justify-content: center;
+    }
+    #detailPopup.show { display: flex; }
+    .detail-sheet {
+      background: #1a1a2e; border-top: 3px solid #ffd700;
+      border-radius: 20px 20px 0 0; padding: 24px 20px 32px;
+      width: 100%; max-width: 500px; animation: slideUp 0.25s ease;
+    }
+    @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+    .detail-close { float: right; background: none; border: none; color: #aaa; font-size: 20px; cursor: pointer; }
+    .detail-title { font-size: 18px; font-weight: bold; color: #ffd700; margin-bottom: 16px; }
+    .detail-section { margin-bottom: 14px; }
+    .detail-section-title { font-size: 11px; color: #aaa; font-weight: bold; letter-spacing: 1px; margin-bottom: 6px; }
+    .detail-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #ffffff08; font-size: 13px; }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-row-label { color: #aaa; }
+    .val-green  { color: #2ecc71; font-weight: bold; }
+    .val-red    { color: #e74c3c; font-weight: bold; }
+    .val-yellow { color: #ffd700; font-weight: bold; }
+    .val-blue   { color: #7ecfff; font-weight: bold; }
+    .prob-bar-wrap { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
+    .prob-bar-bg   { flex: 1; background: #333; border-radius: 999px; height: 8px; overflow: hidden; }
+    .prob-bar-fill { height: 100%; border-radius: 999px; }
+    .prob-pct      { font-size: 13px; font-weight: bold; color: #ffd700; min-width: 36px; text-align: right; }
+    .scenario-box  { border-radius: 8px; padding: 10px 12px; margin-bottom: 6px; font-size: 12px; line-height: 1.6; }
+    .scenario-box.success { background: #1a3a1a; border-left: 3px solid #2ecc71; }
+    .scenario-box.fail    { background: #3a1a1a; border-left: 3px solid #e74c3c; }
+    .scenario-label { font-weight: bold; margin-bottom: 2px; }
+    .detail-select-btn {
+      width: 100%; padding: 14px; font-size: 16px; font-weight: bold;
+      background: #ffd700; color: #0f0f1a; border: none;
+      border-radius: 12px; cursor: pointer; margin-top: 16px;
+    }
+    .detail-select-btn.pirate { background: #e74c3c; color: white; }
+
+    /* 결과 처리 중 내 팀 강조 */
+    .my-turn-highlight {
+      background: #2e1a0a; border: 2px solid #e67e22;
+      border-radius: 12px; padding: 16px; margin-bottom: 16px;
+      text-align: center; animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 #e67e2244} 50%{box-shadow:0 0 0 8px #e67e2200} }
+
+    /* 다른 팀 결과 처리 현황 */
+    .results-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+    .result-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px; border-radius: 8px;
+      background: #0f0f1a; border: 1px solid #333; font-size: 12px;
+    }
+    .result-item.done    { border-color: #2ecc71; }
+    .result-item.current { border-color: #ffd700; background: #1a1a10; }
+    .result-item.pending { opacity: 0.5; }
+
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .blink { animation: blink 1.5s infinite; }
+  </style>
+</head>
+<body>
+  <h1>⚔ 던전 오브 팀즈</h1>
+  <p class="subtitle">팀빌딩 RPG 레크리에이션</p>
+
+  <!-- 직업 선택 화면 -->
+  <div id="jobScreen">
+    <p style="text-align:center;color:#ffd700;font-size:15px;font-weight:bold;">직업을 선택하세요</p>
+    <div class="job-grid">
+      <div class="job-card" onclick="selectJob('warrior',this)">
+        <div class="job-illust">⚔️</div>
+        <div class="job-name">전사</div>
+        <div class="job-desc">신체 퀘스트 +20%<br>강화 비용 -10%</div>
+        <div class="job-skill">스킬: 도발</div>
+      </div>
+      <div class="job-card" onclick="selectJob('mage',this)">
+        <div class="job-illust">🔮</div>
+        <div class="job-name">마법사</div>
+        <div class="job-desc">퀴즈 퀘스트 +20%<br>운명카드 2장 선택</div>
+        <div class="job-skill">스킬: 예언</div>
+      </div>
+      <div class="job-card" onclick="selectJob('archer',this)">
+        <div class="job-illust">🏹</div>
+        <div class="job-name">궁수</div>
+        <div class="job-desc">골드 획득 +15%<br>경매 최저가 공개</div>
+        <div class="job-skill">스킬: 정찰</div>
+      </div>
+      <div class="job-card" onclick="selectJob('healer',this)">
+        <div class="job-illust">✨</div>
+        <div class="job-name">힐러</div>
+        <div class="job-desc">강화 실패 50% 환급<br>디버프 자동 무효</div>
+        <div class="job-skill">스킬: 부활</div>
+      </div>
+      <div class="job-card random-card" onclick="rollRandom()">
+        <div class="job-illust">🎲</div>
+        <div class="job-name">랜덤</div>
+        <div class="job-desc">직업이 무작위로<br>결정됩니다</div>
+        <div class="job-skill">히든 직업 출현 가능!</div>
+      </div>
+      <div class="job-card hidden-card">
+        <span class="lock-badge">🔒</span>
+        <div class="job-illust">❓</div>
+        <div class="job-name">히든 직업</div>
+        <div class="job-desc">랜덤으로만<br>획득 가능</div>
+        <div class="job-skill">???</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="selected-job-bar" id="selectedJobBar">
+    <span id="selectedJobIcon" style="font-size:20px;"></span>
+    <span id="selectedJobLabel" style="color:#ffd700;font-weight:bold;"></span>
+    <span style="color:#aaa;font-size:12px;">직업 선택됨</span>
+  </div>
+
+  <div id="teamNameSection">
+    <p>팀 이름을 입력하세요</p>
+    <input type="text" id="teamNameInput" placeholder="예: 불꽃 파티" maxlength="10">
+  </div>
+  <button class="confirm-btn" id="confirmBtn" onclick="confirmJoin()">게임 참가하기</button>
+
+  <!-- 랜덤 팝업 -->
+  <div id="randomPopup">
+    <div class="popup-box" id="popupBox">
+      <div class="popup-illust"    id="popupIllust"></div>
+      <div id="hiddenBadge" class="popup-hidden-badge" style="display:none;">✦ 히든 직업 획득! ✦</div>
+      <div class="popup-job-name"  id="popupJobName"></div>
+      <div class="popup-desc"      id="popupDesc"></div>
+      <div class="popup-skill"     id="popupSkill"></div>
+      <button class="popup-confirm" onclick="confirmRandom()">이 직업으로 시작!</button>
+    </div>
+  </div>
+
+  <!-- 게임 메인 화면 -->
+  <div id="gameScreen">
+
+    <!-- 팀 정보 -->
+    <div class="team-info-box" id="teamInfoBox">
+      <div class="team-info-top">
+        <div class="team-job-img" id="myJobIcon">⚔️</div>
+        <div class="team-info-text">
+          <div class="team-name-display" id="myTeamName"></div>
+          <div class="team-job-display"  id="myJobLabel"></div>
+        </div>
+      </div>
+      <div class="team-stats">
+        <div class="stat-box">
+          <div class="stat-val"   id="myGold">1,000</div>
+          <div class="stat-label">💰 골드</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val"   id="myPoints">0</div>
+          <div class="stat-label">⭐ 포인트</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val"   id="myItemLevel">0</div>
+          <div class="stat-label">🔨 강화</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 페이즈별 안내 -->
+    <div id="phaseArea"></div>
+
+    <!-- 액션 선택 영역 -->
+    <div id="actionSection">
+      <p class="action-title">🎯 이번 라운드 행동을 선택하세요!</p>
+      <p class="action-hint">카드를 꾹 누르면 상세 정보를 볼 수 있어요</p>
+      <div class="action-grid" id="actionGrid"></div>
+    </div>
+
+  </div>
+
+  <!-- 상세 정보 팝업 -->
+  <div id="detailPopup" onclick="closeDetail(event)">
+    <div class="detail-sheet" id="detailSheet">
+      <button class="detail-close" onclick="closeDetailBtn()">✕</button>
+      <div class="detail-title"   id="detailTitle"></div>
+      <div id="detailContent"></div>
+      <button class="detail-select-btn" id="detailSelectBtn" onclick="selectFromDetail()"></button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { db, ref, set, onValue, update } from "../shared/firebase.js";
+
+    const JOBS = {
+      warrior: { icon:'⚔️', name:'전사',   desc:'신체 퀘스트 성공률 +20%\n강화 비용 10% 할인',       skill:'스킬: 도발 — 지정 팀 퀘스트 난이도 강제 상향', hidden:false },
+      mage:    { icon:'🔮', name:'마법사', desc:'퀴즈 퀘스트 성공률 +20%\n운명카드 2장 중 1장 선택', skill:'스킬: 예언 — 다음 퀘스트 미리 확인',           hidden:false },
+      archer:  { icon:'🏹', name:'궁수',   desc:'골드 획득량 +15%\n경매 최저가 정보 공개',           skill:'스킬: 정찰 — 임의 팀 골드 현황 확인',          hidden:false },
+      healer:  { icon:'✨', name:'힐러',   desc:'강화 실패 시 골드 50% 환급\n디버프 1회 자동 무효화', skill:'스킬: 부활 — 퀘스트 실패 재도전 1회',          hidden:false },
+      pirate:  { icon:'🏴‍☠️', name:'해적', desc:'매 턴 임의 팀 골드 5~15% 약탈\n모든 퀘스트 유형 가능', skill:'스킬: 강탈 — 지정 팀 골드 최대 20% 즉시 약탈', hidden:true },
+    };
+    const NORMAL_JOBS   = ['warrior','mage','archer','healer'];
+    const ENHANCE_COST  = [0,500,1000,2000,3500,6000];
+    const ENHANCE_PROB  = [0,0.90,0.75,0.55,0.35,0.15];
+    const ACTION_NAMES  = { quest:'퀘스트 도전', enhance:'아이템 강화', fate:'운명카드', auction:'경매', plunder:'약탈' };
+
+    let myTeamId    = null;
+    let selectedJob = null;
+    let rolledJob   = null;
+    let myTeamData  = {};
+    let gameStateData = {};
+    let allTeams    = {};
+    let pendingActionKey = null;
+    let holdTimer   = null;
+
+    // ── 직업 선택 ───────────────────────────────────────────
+    window.selectJob = function(jobKey, el) {
+      selectedJob = jobKey;
+      document.querySelectorAll('.job-card:not(.hidden-card):not(.random-card)').forEach(c=>c.classList.remove('selected'));
+      el.classList.add('selected');
+      showJobBar(jobKey); showTeamInput();
+    };
+    function showJobBar(jobKey) {
+      const job = JOBS[jobKey];
+      document.getElementById('selectedJobIcon').textContent  = job.icon;
+      document.getElementById('selectedJobLabel').textContent = job.name;
+      document.getElementById('selectedJobBar').classList.add('show');
+    }
+    function showTeamInput() {
+      document.getElementById('teamNameSection').style.display = 'block';
+      document.getElementById('confirmBtn').style.display      = 'block';
+    }
+
+    // ── 랜덤 ────────────────────────────────────────────────
+    window.rollRandom = function() {
+      const rand   = Math.random();
+      const picked = rand < 0.20 ? 'pirate' : NORMAL_JOBS[Math.floor((rand-0.20)/0.80*NORMAL_JOBS.length)];
+      rolledJob = picked;
+      showRandomPopup(picked);
+    };
+    function showRandomPopup(jobKey) {
+      const job = JOBS[jobKey], box = document.getElementById('popupBox');
+      document.getElementById('popupIllust').textContent  = job.icon;
+      document.getElementById('popupJobName').textContent = job.name;
+      document.getElementById('popupDesc').textContent    = job.desc;
+      document.getElementById('popupSkill').textContent   = job.skill;
+      document.getElementById('hiddenBadge').style.display = job.hidden ? 'inline-block' : 'none';
+      job.hidden ? box.classList.add('pirate-popup') : box.classList.remove('pirate-popup');
+      document.getElementById('randomPopup').classList.add('show');
+    }
+    window.confirmRandom = function() {
+      selectedJob = rolledJob;
+      document.getElementById('randomPopup').classList.remove('show');
+      document.querySelectorAll('.job-card').forEach(c=>c.classList.remove('selected'));
+      document.querySelector('.random-card').classList.add('selected');
+      showJobBar(rolledJob); showTeamInput();
+    };
+
+    // ── 참가 확정 ───────────────────────────────────────────
+    window.confirmJoin = function() {
+      const teamName = document.getElementById('teamNameInput').value.trim();
+      if (!teamName)    { alert('팀 이름을 입력하세요!'); return; }
+      if (!selectedJob) { alert('직업을 선택하세요!'); return; }
+      myTeamId = 'team_' + Date.now();
+      localStorage.setItem('myTeamId', myTeamId);
+      set(ref(db,'teams/'+myTeamId), {
+        name:teamName, job:selectedJob, gold:1000,
+        points:0, itemLevel:0, bossDamage:0, activeSkillUsed:false
+      });
+      switchToGame(teamName, selectedJob);
+    };
+
+    function switchToGame(name, job) {
+      document.getElementById('jobScreen').style.display       = 'none';
+      document.getElementById('teamNameSection').style.display = 'none';
+      document.getElementById('confirmBtn').style.display      = 'none';
+      document.getElementById('selectedJobBar').classList.remove('show');
+      document.getElementById('gameScreen').style.display      = 'block';
+      const j = JOBS[job] || { icon:'❓', name:job, hidden:false };
+      document.getElementById('myJobIcon').textContent  = j.icon;
+      document.getElementById('myTeamName').textContent = name;
+      document.getElementById('myJobLabel').textContent = j.name + (j.hidden ? ' 🏴‍☠️ [히든]' : '');
+      if (job === 'pirate') document.getElementById('teamInfoBox').classList.add('pirate-box');
+    }
+
+    // ── 새로고침 복원 ───────────────────────────────────────
+    const savedId = localStorage.getItem('myTeamId');
+    if (savedId) {
+      onValue(ref(db,'teams/'+savedId), (snap) => {
+        const d = snap.val();
+        if (d) {
+          myTeamId = savedId; selectedJob = d.job; myTeamData = d;
+          switchToGame(d.name, d.job);
+          updateMyStats(d);
+        } else { localStorage.removeItem('myTeamId'); }
+      }, { onlyOnce:true });
+    }
+
+    // ── 내 팀 데이터 실시간 ─────────────────────────────────
+    onValue(ref(db,'teams'), (snap) => {
+      allTeams = snap.val() || {};
+      if (myTeamId && allTeams[myTeamId]) {
+        myTeamData = allTeams[myTeamId];
+        updateMyStats(myTeamData);
+      }
+    });
+
+    function updateMyStats(d) {
+      document.getElementById('myGold').textContent      = (d.gold||0).toLocaleString();
+      document.getElementById('myPoints').textContent    = d.points||0;
+      document.getElementById('myItemLevel').textContent = d.itemLevel>0 ? '+'+d.itemLevel+'강' : '없음';
+    }
+
+    // ── 게임 상태 감지 — 핵심 ───────────────────────────────
+    onValue(ref(db,'gameState'), (snap) => {
+      gameStateData = snap.val() || {};
+      if (!myTeamId) return;
+      renderGamePhase();
+    });
+
+    function renderGamePhase() {
+      const state   = gameStateData;
+      const phase   = state.phase;
+      const sels    = state.selections || {};
+      const myPick  = sels[myTeamId];
+      const phaseArea    = document.getElementById('phaseArea');
+      const actionSection= document.getElementById('actionSection');
+
+      // 기본적으로 액션 섹션 숨김
+      actionSection.style.display = 'none';
+
+      if (!phase || phase === 'lobby') {
+        // 로비 — 게임 시작 대기
+        phaseArea.innerHTML = `
+          <div class="phase-box waiting">
+            <div class="phase-icon">⏳</div>
+            <div class="phase-title">게임 시작 대기 중</div>
+            <div class="phase-desc">MC가 게임을 시작하면 알려드릴게요!</div>
+          </div>`;
+
+      } else if (phase === 'selecting') {
+        if (!myPick) {
+          // 아직 선택 안 함 → 액션 선택 화면
+          phaseArea.innerHTML = `
+            <div class="phase-box selecting">
+              <div class="phase-icon">🎯</div>
+              <div class="phase-title" style="color:#2ecc71;">이번 라운드 행동을 선택하세요!</div>
+              <div class="phase-desc">팀원들과 의논 후 하나를 선택하세요.<br>모든 팀이 선택하면 MC가 결과를 처리합니다.</div>
+            </div>`;
+          actionSection.style.display = 'block';
+          renderActions();
+        } else {
+          // 선택 완료 → 다른 팀 기다리는 화면
+          const totalTeams = Object.keys(allTeams).length;
+          const doneTeams  = Object.keys(sels).length;
+          phaseArea.innerHTML = `
+            <div class="phase-box selected">
+              <div class="phase-icon">✅</div>
+              <div class="phase-title" style="color:#ffd700;">"${ACTION_NAMES[myPick]}" 선택 완료!</div>
+              <div class="phase-desc blink">다른 팀 선택 대기 중... (${doneTeams}/${totalTeams}팀 완료)</div>
+            </div>`;
+        }
+
+      } else if (phase === 'judging') {
+        // 결과 처리 중 — 어떤 팀이 처리되고 있는지 보여줌
+        const currentTid  = state.currentTeamTurn;
+        const isMyTurn    = currentTid === myTeamId;
+        const teams       = Object.keys(allTeams);
+        const curIdx      = state.currentTeamIndex || 0;
+
+        if (isMyTurn) {
+          phaseArea.innerHTML = `
+            <div class="my-turn-highlight">
+              <div style="font-size:32px;margin-bottom:8px;">🎺</div>
+              <div style="font-size:18px;font-weight:bold;color:#e67e22;">지금 우리 팀 결과 처리 중!</div>
+              <div style="font-size:13px;color:#aaa;margin-top:6px;">행사장 화면을 확인하세요!</div>
+            </div>`;
+        } else {
+          phaseArea.innerHTML = `
+            <div class="phase-box judging">
+              <div class="phase-icon">⚡</div>
+              <div class="phase-title" style="color:#7ecfff;">결과 처리 중...</div>
+              <div class="phase-desc">행사장 화면에서 결과를 확인하세요!</div>
+            </div>`;
+        }
+
+        // 팀별 진행 현황
+        const resultsList = teams.map((tid, i) => {
+          const t      = allTeams[tid];
+          const action = sels[tid];
+          let cls = 'result-item pending';
+          let icon = '⏳';
+          if (i < curIdx)      { cls = 'result-item done';    icon = '✅'; }
+          else if (i === curIdx){ cls = 'result-item current'; icon = '🎯'; }
+          return `
+            <div class="${cls}">
+              <span>${icon}</span>
+              <span style="font-weight:bold;">${t?.name||'?'}</span>
+              <span style="color:#aaa;font-size:11px;margin-left:auto;">${ACTION_NAMES[action]||'선택없음'}</span>
+            </div>`;
+        }).join('');
+
+        phaseArea.innerHTML += `
+          <div style="margin-top:12px;">
+            <div style="font-size:12px;color:#aaa;margin-bottom:6px;">팀별 진행 현황</div>
+            <div class="results-list">${resultsList}</div>
+          </div>`;
+
+      } else if (phase === 'result') {
+        phaseArea.innerHTML = `
+          <div class="phase-box waiting">
+            <div class="phase-icon">📊</div>
+            <div class="phase-title">라운드 결과 집계 중</div>
+            <div class="phase-desc">행사장 화면에서 결과를 확인하세요!<br>잠시 후 다음 라운드가 시작됩니다.</div>
+          </div>`;
+
+      } else if (phase === 'boss') {
+        phaseArea.innerHTML = `
+          <div class="phase-box" style="background:#2a0a0a;border:2px solid #e74c3c;">
+            <div class="phase-icon">👹</div>
+            <div class="phase-title" style="color:#ff8888;">보스전 진행 중!</div>
+            <div class="phase-desc">행사장 화면에서 보스 HP를 확인하세요!</div>
+          </div>`;
+      }
+    }
+
+    // ── 액션 카드 렌더링 ────────────────────────────────────
+    function renderActions() {
+      const isPirate = selectedJob === 'pirate';
+      const lvl      = myTeamData.itemLevel || 0;
+      const gold     = myTeamData.gold || 0;
+      const actions  = [
+        { key:'quest',   icon:'⚔️', name:'퀘스트 도전',
+          sumOk:`성공 시 +500~1,150 골드${getQuestBonus()}`, sumBad:'실패 시 골드 없음' },
+        { key:'enhance', icon:'🔨', name:'아이템 강화',
+          sumOk:  lvl>=5 ? '이미 최대 강화!' : `성공 시 +${lvl+1}강 (확률 ${Math.round(ENHANCE_PROB[lvl+1]*100)}%)`,
+          sumBad: lvl>=5 ? '' : `실패 시 -${getEnhanceCost(lvl)} 골드`,
+          disabled: lvl>=5 || gold < (selectedJob==='warrior' ? Math.round(ENHANCE_COST[lvl+1]*0.9) : ENHANCE_COST[lvl+1]),
+          disabledMsg: lvl>=5 ? '최대 강화' : '골드 부족' },
+        { key:'fate',    icon:'🃏', name:'운명카드',
+          sumOk:'6가지 랜덤 이벤트 발동', sumBad:'좋은 카드도 나쁜 카드도 있음' },
+        { key:'auction', icon:'🏆', name:'경매 참여',
+          sumOk:'희귀 아이템 최고가 입찰 획득', sumBad:'패배 시 입찰 골드 소모' },
+      ];
+      if (isPirate) {
+        actions.push({ key:'plunder', icon:'🏴‍☠️', name:'약탈',
+          sumOk:'임의 팀 골드 5~20% 즉시 강탈', sumBad:'실패 없음 (항상 성공)', pirate:true });
+      }
+
+      document.getElementById('actionGrid').innerHTML = actions.map(a => `
+        <div class="action-card ${a.pirate?'pirate-action':''} ${a.disabled?'disabled-card':''}"
+          onclick="${a.disabled ? '' : `selectAction('${a.key}')`}"
+          oncontextmenu="event.preventDefault();${a.disabled ? '' : `showDetail('${a.key}')`}"
+          ontouchstart="${a.disabled ? '' : `startHold('${a.key}',event)`}"
+          ontouchend="cancelHold()" ontouchmove="cancelHold()"
+          style="${a.disabled?'opacity:0.4;cursor:not-allowed;':''}">
+          <div class="action-icon">${a.icon}</div>
+          <div class="action-name">${a.name}</div>
+          ${a.disabled
+            ? `<div style="font-size:11px;color:#e74c3c;margin-top:4px;">🚫 ${a.disabledMsg}</div>`
+            : `<div class="action-summary">
+                <div class="sum-ok">✅ ${a.sumOk}</div>
+                <div class="sum-bad">${a.sumBad?'❌ '+a.sumBad:''}</div>
+               </div>`}
+        </div>
+      `).join('');
+    }
+
+    function getQuestBonus() {
+      if (selectedJob==='warrior') return ' (신체+20%)';
+      if (selectedJob==='mage')    return ' (퀴즈+20%)';
+      if (selectedJob==='archer')  return ' (+15%)';
+      return '';
+    }
+    function getEnhanceCost(lvl) {
+      if (lvl>=5) return '-';
+      const base = ENHANCE_COST[lvl+1];
+      return (selectedJob==='warrior' ? Math.round(base*0.9) : base).toLocaleString();
+    }
+
+    // ── 액션 선택 전송 ──────────────────────────────────────
+    window.selectAction = function(action) {
+      if (!myTeamId) return;
+      // gameState/selections 하위에 내 팀 선택 저장
+      update(ref(db,'gameState/selections'), { [myTeamId]: action });
+    };
+
+    // ── 꾹 누르기 (롱프레스) ────────────────────────────────
+    window.startHold = function(key, e) {
+      e.preventDefault();
+      holdTimer = setTimeout(() => showDetail(key), 500);
+    };
+    window.cancelHold = function() { clearTimeout(holdTimer); holdTimer = null; };
+
+    // ── 상세 정보 팝업 ──────────────────────────────────────
+    window.showDetail = function(key) {
+      pendingActionKey = key;
+      const lvl  = myTeamData.itemLevel || 0;
+      const gold = myTeamData.gold || 0;
+      let title = '', content = '';
+
+      if (key === 'quest') {
+        const prob = selectedJob==='warrior'||selectedJob==='mage' ? 85 : 70;
+        const bonusLabel = {warrior:'신체 퀘스트 +20%',mage:'퀴즈 퀘스트 +20%',archer:'골드 +15%',healer:'없음',pirate:'모든 퀘스트 가능'}[selectedJob]||'없음';
+        const itemBonus  = [0,5,10,15,25,40][lvl]||0;
+        const minGold    = Math.round(500*(1+itemBonus/100));
+        const maxGold    = Math.round(1150*(1+itemBonus/100));
+        title = '⚔️ 퀘스트 도전';
+        content = `
+          <div class="detail-section">
+            <div class="detail-section-title">성공 확률</div>
+            <div class="prob-bar-wrap">
+              <div class="prob-bar-bg"><div class="prob-bar-fill" style="width:${prob}%;background:#ffd700;"></div></div>
+              <div class="prob-pct">${prob}%</div>
+            </div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-section-title">내 직업 보너스</div>
+            <div class="detail-row"><span class="detail-row-label">직업 효과</span><span class="val-yellow">${bonusLabel}</span></div>
+            <div class="detail-row"><span class="detail-row-label">강화 보너스</span><span class="val-blue">+${itemBonus}%</span></div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-section-title">시나리오</div>
+            <div class="scenario-box success"><div class="scenario-label val-green">✅ 성공하면</div>${minGold.toLocaleString()} ~ ${maxGold.toLocaleString()} 골드 획득</div>
+            <div class="scenario-box fail"><div class="scenario-label val-red">❌ 실패하면</div>골드 없음. 턴 종료.${selectedJob==='healer'?'<br>💡 힐러: 부활 스킬로 재도전 가능!':''}</div>
+          </div>`;
+
+      } else if (key === 'enhance') {
+        if (lvl>=5) {
+          title = '🔨 아이템 강화';
+          content = `<div class="scenario-box fail"><div class="scenario-label val-red">이미 최대 강화 (+5)</div>다른 액션을 선택하세요.</div>`;
+        } else {
+          const prob   = Math.round(ENHANCE_PROB[lvl+1]*100);
+          const cost   = selectedJob==='warrior' ? Math.round(ENHANCE_COST[lvl+1]*0.9) : ENHANCE_COST[lvl+1];
+          const insufficient = gold < cost;
+          title = `🔨 아이템 강화 (+${lvl} → +${lvl+1})`;
+          content = `
+            <div class="detail-section">
+              <div class="detail-section-title">강화 정보</div>
+              <div class="detail-row"><span class="detail-row-label">필요 골드</span><span class="${insufficient?'val-red':'val-green'}">${cost.toLocaleString()} ${insufficient?'(골드 부족!)':''}</span></div>
+              <div class="detail-row"><span class="detail-row-label">성공 확률</span><span class="val-yellow">${prob}%</span></div>
+            </div>
+            <div class="prob-bar-wrap">
+              <div class="prob-bar-bg"><div class="prob-bar-fill" style="width:${prob}%;background:#ffd700;"></div></div>
+              <div class="prob-pct">${prob}%</div>
+            </div>
+            <div class="detail-section">
+              <div class="scenario-box success"><div class="scenario-label val-green">✅ 성공하면</div>+${lvl+1}강! 퀘스트 골드 +${[0,5,10,15,25,40][lvl+1]}% 보너스</div>
+              <div class="scenario-box fail"><div class="scenario-label val-red">❌ 실패하면</div>-${cost.toLocaleString()} 골드${selectedJob==='healer'?`<br>💡 힐러: ${Math.round(cost*0.5).toLocaleString()} 골드 환급!`:''}</div>
+            </div>`;
+        }
+
+      } else if (key === 'fate') {
+        title = '🃏 운명카드';
+        content = `
+          <div class="detail-section">
+            <div class="detail-section-title">카드 목록 (랜덤 1장)</div>
+            <div class="detail-row"><span class="detail-row-label">💰 황금의 축복</span><span class="val-yellow">이번 턴 골드 2배</span></div>
+            <div class="detail-row"><span class="detail-row-label">💀 저주의 덫</span><span class="val-red">타팀 골드 -20%</span></div>
+            <div class="detail-row"><span class="detail-row-label">🧠 천재의 영감</span><span class="val-blue">퀘스트 자동성공</span></div>
+            <div class="detail-row"><span class="detail-row-label">🦊 부의 이전</span><span class="val-yellow">1위→꼴찌 골드 이전</span></div>
+            <div class="detail-row"><span class="detail-row-label">🔄 전설의 부활</span><span class="val-green">실패 퀘스트 성공 전환</span></div>
+          </div>
+          ${selectedJob==='mage'?'<div class="scenario-box success"><div class="scenario-label val-green">💡 마법사 보너스</div>2장을 뽑아서 원하는 카드를 선택할 수 있어요!</div>':''}`;
+
+      } else if (key === 'auction') {
+        title = '🏆 경매 참여';
+        content = `
+          <div class="detail-section">
+            <div class="detail-section-title">경매 규칙</div>
+            <div class="detail-row"><span class="detail-row-label">입찰 시간</span><span class="val-yellow">30초</span></div>
+            <div class="detail-row"><span class="detail-row-label">낙찰 조건</span><span class="val-green">최고가 팀 획득</span></div>
+          </div>
+          <div class="scenario-box success"><div class="scenario-label val-green">✅ 낙찰 시</div>강력한 아이템 획득!</div>
+          <div class="scenario-box fail" style="margin-top:6px;"><div class="scenario-label val-red">❌ 낙찰 실패 시</div>입찰 골드 전액 소모${selectedJob==='archer'?'<br>💡 궁수: 현재 최저 입찰가 확인 가능!':''}</div>`;
+
+      } else if (key === 'plunder') {
+        title = '🏴‍☠️ 약탈 (해적 전용)';
+        content = `
+          <div class="detail-section">
+            <div class="detail-row"><span class="detail-row-label">성공 확률</span><span class="val-green">100% (항상 성공)</span></div>
+            <div class="detail-row"><span class="detail-row-label">약탈 비율</span><span class="val-yellow">상대 골드의 5~20%</span></div>
+            <div class="detail-row"><span class="detail-row-label">대상</span><span class="val-blue">랜덤 1팀</span></div>
+          </div>
+          <div class="scenario-box success"><div class="scenario-label val-green">✅ 약탈 결과</div>선택된 팀의 골드를 빼앗아옵니다!</div>`;
+      }
+
+      document.getElementById('detailTitle').innerHTML   = title;
+      document.getElementById('detailContent').innerHTML = content;
+      const btn = document.getElementById('detailSelectBtn');
+      btn.textContent = `${title} 선택하기`;
+      if (key==='plunder') btn.classList.add('pirate'); else btn.classList.remove('pirate');
+      document.getElementById('detailPopup').classList.add('show');
+    };
+
+    window.closeDetail    = function(e) { if (e.target===document.getElementById('detailPopup')) closeDetailBtn(); };
+    window.closeDetailBtn = function()  { document.getElementById('detailPopup').classList.remove('show'); pendingActionKey=null; };
+    window.selectFromDetail = function() { if (pendingActionKey) { selectAction(pendingActionKey); closeDetailBtn(); } };
+  </script>
+</body>
+</html>

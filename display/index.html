@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>던전 오브 팀즈 — 행사장 메인화면</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0a0818;
+      color: white;
+      font-family: Arial, sans-serif;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── 배경 ── */
+    .bg-layer {
+      position: fixed; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse at 50% 0%, #2a0a5a55 0%, transparent 60%),
+        radial-gradient(ellipse at 20% 100%, #0a1a3a55 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 100%, #1a0a2a55 0%, transparent 50%);
+    }
+    #stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+    .star {
+      position: absolute; background: white; border-radius: 50%;
+      animation: twinkle var(--d,2s) ease-in-out infinite;
+    }
+    @keyframes twinkle { 0%,100%{opacity:.2} 50%{opacity:1} }
+
+    /* ── 레이아웃 ── */
+    .main-wrap {
+      position: relative; z-index: 1;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-height: 100vh;
+      padding: 16px;
+      gap: 12px;
+    }
+
+    /* ── 헤더 ── */
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .game-title {
+      font-size: 28px; font-weight: bold; color: #ffd700;
+      text-shadow: 0 0 20px #ffd70066;
+    }
+    .round-badge {
+      background: #ffd700; color: #0a0818;
+      font-size: 15px; font-weight: bold;
+      padding: 6px 20px; border-radius: 999px;
+    }
+    .phase-label { font-size: 13px; color: #aaa; }
+
+    /* ── 전투 영역 ── */
+    .battle-area {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 0 40px;
+      position: relative;
+      min-height: 340px;
+    }
+
+    /* 던전 바닥선 */
+    .battle-area::after {
+      content: '';
+      position: absolute;
+      bottom: 40px; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #4a3a6a88, #7a5a9a, #4a3a6a88, transparent);
+    }
+
+    /* ── 캐릭터 유닛 ── */
+    .char-unit {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 8px;
+      position: relative;
+    }
+    .char-name {
+      font-size: 14px; font-weight: bold; color: #ffd700;
+      text-shadow: 0 0 8px #ffd70066;
+      white-space: nowrap;
+    }
+    .char-job-badge {
+      font-size: 11px; color: #aaa;
+      background: #ffffff11; border: 1px solid #ffffff22;
+      padding: 2px 10px; border-radius: 999px;
+    }
+    .char-img-wrap {
+      position: relative;
+      width: 160px; height: 200px;
+      display: flex; align-items: flex-end; justify-content: center;
+    }
+    .char-img {
+        max-width: 100%; max-height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 16px #00000088);
+      transform-origin: bottom center;
+      background: transparent;
+      mix-blend-mode: multiply;
+    }
+
+    /* 아이들 애니메이션 */
+    @keyframes idle      { 0%,100%{transform:translateY(0)}    50%{transform:translateY(-6px)} }
+    @keyframes attack    { 0%,100%{transform:translateX(0) rotate(0deg)} 30%{transform:translateX(40px) rotate(-5deg)} 60%{transform:translateX(28px) rotate(3deg)} }
+    @keyframes hit       { 0%,100%{transform:translateX(0) brightness(1)} 25%{transform:translateX(10px)} 75%{transform:translateX(-10px)} }
+    @keyframes healAnim  { 0%,100%{transform:scale(1)} 40%{transform:scale(1.08)} 60%{transform:scale(0.96)} }
+    @keyframes mageAnim  { 0%,100%{transform:translateY(0) rotate(0deg)} 40%{transform:translateY(-10px) rotate(-3deg)} }
+    @keyframes pirAnim   { 0%,100%{transform:translateX(0) rotate(0deg)} 35%{transform:translateX(36px) rotate(8deg)} }
+    @keyframes archAnim  { 0%,100%{transform:translateX(0)} 30%{transform:translateX(10px)} 50%{transform:translateX(30px)} }
+
+    .anim-idle    { animation: idle     2s   ease-in-out infinite; }
+    .anim-attack  { animation: attack   0.8s ease-in-out; }
+    .anim-mage    { animation: mageAnim 0.9s ease-in-out; }
+    .anim-pirate  { animation: pirAnim  0.8s ease-in-out; }
+    .anim-archer  { animation: archAnim 0.7s ease-in-out; }
+    .anim-heal    { animation: healAnim 0.8s ease-in-out; }
+    .anim-hit     { animation: hit      0.4s ease-in-out; filter: brightness(2) hue-rotate(0deg); }
+
+    /* HP바 */
+    .char-hp-wrap { width: 140px; }
+    .char-hp-bg   { background: #222; border-radius: 999px; height: 8px; overflow: hidden; border: 1px solid #444; }
+    .char-hp-fill { height: 100%; border-radius: 999px; transition: width .6s ease; }
+    .char-hp-text { font-size: 10px; color: #888; text-align: right; margin-top: 2px; }
+
+    /* 강화 뱃지 */
+    .enhance-badge {
+      position: absolute; top: 0; right: -8px;
+      background: #ffd700; color: #0a0818;
+      font-size: 10px; font-weight: bold;
+      padding: 2px 6px; border-radius: 999px;
+      display: none;
+    }
+    .enhance-badge.show { display: block; }
+
+    /* ── VS ── */
+    .vs-center {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 8px;
+      padding-bottom: 60px;
+    }
+    .vs-text {
+      font-size: 36px; font-weight: bold; color: #e74c3c;
+      text-shadow: 0 0 16px #e74c3c88;
+      animation: vsPulse 1.5s ease-in-out infinite;
+    }
+    @keyframes vsPulse { 0%,100%{text-shadow:0 0 8px #e74c3c55} 50%{text-shadow:0 0 28px #e74c3c, 0 0 50px #ff8888} }
+
+    /* ── 보스 ── */
+    .boss-unit { align-items: center; }
+    .boss-img-wrap {
+      width: 200px; height: 220px;
+      display: flex; align-items: flex-end; justify-content: center;
+      position: relative;
+    }
+    .boss-emoji { font-size: 120px; line-height: 1; filter: drop-shadow(0 0 20px #8e44ad88); }
+    @keyframes bossIdle { 0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(-8px) scale(1.03)} }
+    @keyframes bossHit  { 0%,100%{transform:translateX(0)} 25%{transform:translateX(12px)} 75%{transform:translateX(-12px)} }
+    .boss-idle { animation: bossIdle 2.5s ease-in-out infinite; }
+    .boss-anim-hit { animation: bossHit 0.4s ease-in-out; }
+
+    /* 보스 HP */
+    .boss-hp-section {
+      display: none;
+      padding: 8px 16px;
+      background: #1a0a0a88;
+      border: 1px solid #e74c3c44;
+      border-radius: 12px;
+      margin-bottom: 4px;
+    }
+    .boss-hp-section.show { display: block; }
+    .boss-hp-label { font-size: 12px; color: #ff8888; font-weight: bold; margin-bottom: 4px; }
+    .boss-hp-bar-bg { background: #333; border-radius: 999px; height: 14px; overflow: hidden; }
+    .boss-hp-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #e74c3c, #ff6b6b);
+      border-radius: 999px; transition: width .8s ease;
+    }
+    .boss-hp-text { font-size: 11px; color: #ff8888; text-align: right; margin-top: 2px; }
+
+    /* ── 이펙트 ── */
+    .effect-layer { position: fixed; inset: 0; z-index: 50; pointer-events: none; }
+    .dmg-number {
+      position: absolute;
+      font-size: 36px; font-weight: bold; color: #ff6b6b;
+      text-shadow: 0 0 12px #ff444488;
+      animation: dmgPop 1.5s ease-out forwards;
+      pointer-events: none;
+    }
+    .heal-number {
+      position: absolute;
+      font-size: 30px; font-weight: bold; color: #2ecc71;
+      text-shadow: 0 0 12px #2ecc7188;
+      animation: dmgPop 1.5s ease-out forwards;
+    }
+    .gold-number {
+      position: absolute;
+      font-size: 28px; font-weight: bold; color: #ffd700;
+      text-shadow: 0 0 12px #ffd70088;
+      animation: dmgPop 1.5s ease-out forwards;
+    }
+    @keyframes dmgPop { 0%{opacity:1;transform:translateY(0) scale(1.2)} 30%{transform:translateY(-24px) scale(1)} 100%{opacity:0;transform:translateY(-70px) scale(.8)} }
+
+    .slash-effect {
+      position: absolute; font-size: 56px; pointer-events: none;
+      animation: slashPop .6s ease-out forwards;
+    }
+    @keyframes slashPop { 0%{opacity:0;transform:rotate(-30deg) scale(.5)} 30%{opacity:1;transform:rotate(10deg) scale(1.3)} 100%{opacity:0;transform:rotate(25deg) scale(.9)} }
+
+    /* ── 이벤트 팝업 ── */
+    #eventPopup {
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%,-50%) scale(0);
+      background: #1a1a2e; border: 3px solid #ffd700;
+      border-radius: 20px; padding: 36px 48px;
+      text-align: center; z-index: 100;
+      transition: transform .3s;
+      min-width: 320px;
+    }
+    #eventPopup.show { transform: translate(-50%,-50%) scale(1); }
+    .popup-icon  { font-size: 64px; margin-bottom: 12px; }
+    .popup-title { font-size: 28px; font-weight: bold; color: #ffd700; margin-bottom: 8px; }
+    .popup-msg   { font-size: 18px; color: #ddd; }
+
+    /* ── 하단 HUD ── */
+    .hud {
+      background: #ffffff08;
+      border: 1px solid #ffffff11;
+      border-radius: 14px;
+      padding: 12px 16px;
+    }
+    .hud-top {
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 10px;
+    }
+    .current-action {
+      font-size: 14px; color: #ffd700; font-weight: bold;
+    }
+    .turn-indicator { font-size: 12px; color: #aaa; }
+
+    /* 팀 칩 */
+    .team-chips {
+      display: flex; gap: 8px; overflow-x: auto;
+      padding-bottom: 2px;
+    }
+    .team-chip {
+      flex-shrink: 0;
+      background: #ffffff0a; border: 1px solid #ffffff15;
+      border-radius: 10px; padding: 8px 14px;
+      display: flex; align-items: center; gap: 8px;
+      min-width: 140px;
+      transition: border-color .3s;
+    }
+    .team-chip.active {
+      border-color: #ffd70088;
+      background: #ffd70011;
+    }
+    .team-chip.pirate { border-color: #e74c3c44; }
+    .chip-rank  { font-size: 18px; }
+    .chip-info  { flex: 1; }
+    .chip-name  { font-size: 13px; font-weight: bold; color: white; }
+    .chip-stats { font-size: 11px; color: #aaa; margin-top: 2px; }
+    .chip-pt    { color: #7ecfff; font-weight: bold; }
+
+    /* 배틀 로그 */
+    .battle-log {
+      display: flex; flex-direction: column; gap: 3px;
+      margin-top: 8px; max-height: 48px; overflow: hidden;
+    }
+    .log-entry { font-size: 11px; color: #888; padding: 2px 8px; border-left: 2px solid #333; }
+    .log-entry.ok     { color: #2ecc71; border-left-color: #2ecc71; }
+    .log-entry.err    { color: #e74c3c; border-left-color: #e74c3c; }
+    .log-entry.sys    { color: #ffd700; border-left-color: #ffd700; }
+    .log-entry.plunder{ color: #e74c3c; border-left-color: #e74c3c; }
+
+    /* 파티클 */
+    .particle {
+      position: absolute; border-radius: 50%; pointer-events: none;
+      animation: floatUp var(--dur,3s) ease-in-out infinite var(--delay,0s);
+    }
+    @keyframes floatUp { 0%{opacity:0;transform:translateY(0) scale(0)} 20%{opacity:.8} 80%{opacity:.3} 100%{opacity:0;transform:translateY(-100px) scale(.2)} }
+  </style>
+</head>
+<body>
+
+<div class="bg-layer"></div>
+<div id="stars"></div>
+<div class="effect-layer" id="effectLayer"></div>
+
+<div class="main-wrap">
+
+  <!-- 헤더 -->
+  <div class="header">
+    <div class="game-title">⚔ 던전 오브 팀즈</div>
+    <div style="text-align:center;">
+      <div class="round-badge" id="roundBadge">게임 준비 중</div>
+    </div>
+    <div class="phase-label" id="phaseLabel">참가팀 대기 중</div>
+  </div>
+
+  <!-- 보스 HP (보스전만) -->
+  <div class="boss-hp-section" id="bossHpSection">
+    <div class="boss-hp-label">👹 던전 보스 HP</div>
+    <div class="boss-hp-bar-bg">
+      <div class="boss-hp-bar-fill" id="bossHpFill" style="width:100%"></div>
+    </div>
+    <div class="boss-hp-text" id="bossHpText">HP: - / -</div>
+  </div>
+
+  <!-- 전투 영역 -->
+  <div class="battle-area" id="battleArea">
+
+    <!-- 현재 턴 팀 캐릭터 -->
+    <div class="char-unit" id="heroUnit">
+      <div class="char-name" id="heroName">대기 중...</div>
+      <div class="char-job-badge" id="heroJob"></div>
+      <div class="char-img-wrap">
+        <img class="char-img anim-idle" id="heroImg" src="" alt="" style="display:none;">
+        <div id="heroEmoji" style="font-size:80px;line-height:1;">⚔️</div>
+        <span class="enhance-badge" id="enhanceBadge"></span>
+      </div>
+      <div class="char-hp-wrap">
+        <div class="char-hp-bg">
+          <div class="char-hp-fill" id="heroHpFill" style="background:linear-gradient(90deg,#2ecc71,#27ae60);width:100%"></div>
+        </div>
+        <div class="char-hp-text" id="heroHpText">💰 1,000 골드</div>
+      </div>
+    </div>
+
+    <!-- VS -->
+    <div class="vs-center">
+      <div class="vs-text">VS</div>
+      <div style="font-size:12px;color:#666;text-align:center;" id="vsLabel">-</div>
+    </div>
+
+    <!-- 보스 / 대기 -->
+    <div class="char-unit boss-unit" id="bossUnit">
+      <div class="char-name" style="color:#ff6b6b;" id="bossName">던전 보스</div>
+      <div class="char-job-badge" style="color:#ff8888;">암흑의 군주</div>
+      <div class="boss-img-wrap">
+        <div class="boss-emoji boss-idle" id="bossEmoji">👹</div>
+      </div>
+      <div class="char-hp-wrap">
+        <div class="char-hp-bg">
+          <div class="char-hp-fill" id="bossHpFill2" style="background:linear-gradient(90deg,#e74c3c,#c0392b);width:60%"></div>
+        </div>
+        <div class="char-hp-text" id="bossHpText2">대기 중</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 하단 HUD -->
+  <div class="hud">
+    <div class="hud-top">
+      <div class="current-action" id="currentAction">참가자 접속 대기 중...</div>
+      <div class="turn-indicator" id="turnIndicator"></div>
+    </div>
+    <div class="team-chips" id="teamChips"></div>
+    <div class="battle-log" id="battleLog"></div>
+  </div>
+
+</div>
+
+<!-- 이벤트 팝업 -->
+<div id="eventPopup">
+  <div class="popup-icon"  id="popupIcon">🎉</div>
+  <div class="popup-title" id="popupTitle">이벤트!</div>
+  <div class="popup-msg"   id="popupMsg"></div>
+</div>
+
+<script type="module">
+  import { db, ref, onValue } from "../shared/firebase.js";
+
+  const JOB_ICONS = { warrior:'⚔️', mage:'🔮', archer:'🏹', healer:'✨', pirate:'🏴‍☠️' };
+  const JOB_NAMES = { warrior:'전사', mage:'마법사', archer:'궁수', healer:'힐러', pirate:'해적 [히든]' };
+  const JOB_IMGS  = {
+    warrior: '../assets/images/warrior.png',
+    archer:  '../assets/images/archer.png',
+    mage:    '../assets/images/mage.png',
+    pirate:  '../assets/images/pirate.png',
+    healer:  '../assets/images/healer.png',
+  };
+  const JOB_ATTACK_ANIM = {
+    warrior: 'anim-attack',
+    archer:  'anim-archer',
+    mage:    'anim-mage',
+    pirate:  'anim-pirate',
+    healer:  'anim-heal',
+  };
+  const ACTION_LABELS = {
+    quest:   '퀘스트 도전 중!',
+    enhance: '아이템 강화 중!',
+    fate:    '운명카드 사용 중!',
+    auction: '경매 참여 중!',
+    plunder: '약탈 중! 🏴‍☠️',
+  };
+  const RANKS = ['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣'];
+
+  let teamsData  = {};
+  let gameState  = {};
+  let lastEventTs = null;
+  let currentHeroJob = null;
+
+  // ── 별 생성 ──────────────────────────────────────────────
+  const starsEl = document.getElementById('stars');
+  for (let i = 0; i < 50; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const sz = Math.random() * 2 + 1;
+    s.style.cssText = `width:${sz}px;height:${sz}px;top:${Math.random()*70}%;left:${Math.random()*100}%;--d:${(Math.random()*2+1.5).toFixed(1)}s;animation-delay:${(Math.random()*3).toFixed(1)}s`;
+    starsEl.appendChild(s);
+  }
+
+  // ── 파티클 ───────────────────────────────────────────────
+  const battleArea = document.getElementById('battleArea');
+  const pColors = ['#9b59b6','#e74c3c','#ffd700','#3498db','#2ecc71'];
+  for (let i = 0; i < 14; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const sz = Math.random() * 5 + 2;
+    p.style.cssText = `width:${sz}px;height:${sz}px;background:${pColors[Math.floor(Math.random()*pColors.length)]};opacity:.5;left:${Math.random()*90+5}%;bottom:${Math.random()*50+10}%;--dur:${(Math.random()*2+2).toFixed(1)}s;--delay:${(Math.random()*3).toFixed(1)}s`;
+    battleArea.appendChild(p);
+  }
+
+  // ── Firebase ─────────────────────────────────────────────
+  onValue(ref(db,'teams'), (snap) => {
+    teamsData = snap.val() || {};
+    renderTeamChips();
+    updateHeroUnit();
+  });
+
+  onValue(ref(db,'gameState'), (snap) => {
+    gameState = snap.val() || {};
+    updateHeader();
+    updateHeroUnit();
+    updateBossSection();
+    renderTeamChips();
+    checkEvent();
+  });
+
+  // ── 헤더 업데이트 ────────────────────────────────────────
+  function updateHeader() {
+    const r = gameState.currentRound;
+    const p = gameState.phase;
+    const ROUND_NAMES = ['','R1 튜토리얼','R2 본격시작','R3 ★ 운명의 밤','R4 전략','R5 ★ 역전의 기회','R6 보스전'];
+    let badge = '게임 준비 중';
+    if (r) badge = p === 'boss' ? '⚔️ 파이널 보스전!' : (ROUND_NAMES[r] || 'R'+r);
+    document.getElementById('roundBadge').textContent = badge;
+
+    const action = gameState.selectedAction;
+    const tid    = gameState.actingTeam || gameState.currentTeamTurn;
+    const team   = tid && teamsData[tid] ? teamsData[tid] : null;
+    document.getElementById('currentAction').textContent = team && action
+      ? `${JOB_ICONS[team.job]||''} ${team.name} — ${ACTION_LABELS[action]||action}`
+      : team ? `${JOB_ICONS[team.job]||''} ${team.name} 팀 턴` : '대기 중...';
+    document.getElementById('phaseLabel').textContent = p || '준비';
+    document.getElementById('vsLabel').textContent     = r ? `Round ${r}` : '-';
+  }
+
+  // ── 히어로 유닛 업데이트 ─────────────────────────────────
+  function updateHeroUnit() {
+    const tid  = gameState.actingTeam || gameState.currentTeamTurn;
+    const team = tid && teamsData[tid] ? teamsData[tid] : null;
+    if (!team) return;
+
+    document.getElementById('heroName').textContent = team.name + ' 팀';
+    document.getElementById('heroJob').textContent  = JOB_NAMES[team.job] || team.job;
+
+    // 이미지 교체 (직업 바뀔 때만)
+    if (team.job !== currentHeroJob) {
+      currentHeroJob = team.job;
+      const img   = document.getElementById('heroImg');
+      const emoji = document.getElementById('heroEmoji');
+      if (JOB_IMGS[team.job]) {
+        img.src = JOB_IMGS[team.job];
+        img.style.display = 'block';
+        emoji.style.display = 'none';
+        img.className = 'char-img anim-idle';
+      } else {
+        img.style.display = 'none';
+        emoji.style.display = 'block';
+        emoji.textContent = JOB_ICONS[team.job] || '⚔️';
+      }
+    }
+
+    // 강화 뱃지
+    const lvl   = team.itemLevel || 0;
+    const badge = document.getElementById('enhanceBadge');
+    if (lvl > 0) { badge.textContent = '+'+lvl+'강'; badge.classList.add('show'); }
+    else badge.classList.remove('show');
+
+    // 골드/포인트
+    document.getElementById('heroHpText').textContent  = `💰 ${(team.gold||0).toLocaleString()} G  ⭐ ${team.points||0}pt`;
+    // HP바 = 골드 비율 (최대 5000 기준)
+    const hpPct = Math.min(100, ((team.gold||0) / 5000) * 100);
+    document.getElementById('heroHpFill').style.width = hpPct + '%';
+  }
+
+  // ── 보스 섹션 ────────────────────────────────────────────
+  function updateBossSection() {
+    const isBoss = gameState.phase === 'boss';
+    document.getElementById('bossHpSection').classList.toggle('show', isBoss);
+    if (isBoss && gameState.bossHPMax) {
+      const hp  = gameState.bossHP    || 0;
+      const max = gameState.bossHPMax || 1;
+      const pct = Math.max(0, (hp/max)*100);
+      document.getElementById('bossHpFill').style.width   = pct + '%';
+      document.getElementById('bossHpText').textContent   = `HP: ${hp.toLocaleString()} / ${max.toLocaleString()}`;
+      document.getElementById('bossHpFill2').style.width  = pct + '%';
+      document.getElementById('bossHpText2').textContent  = `${hp.toLocaleString()} / ${max.toLocaleString()}`;
+    }
+  }
+
+  // ── 팀 칩 ────────────────────────────────────────────────
+  function renderTeamChips() {
+    const sorted = Object.entries(teamsData).sort((a,b)=>(b[1].points||0)-(a[1].points||0));
+    const activeTid = gameState.currentTeamTurn;
+    document.getElementById('teamChips').innerHTML = sorted.map(([id,t],i) => `
+      <div class="team-chip ${id===activeTid?'active':''} ${t.job==='pirate'?'pirate':''}">
+        <div class="chip-rank">${RANKS[i]||''}</div>
+        <div class="chip-info">
+          <div class="chip-name">${JOB_ICONS[t.job]||'❓'} ${t.name}</div>
+          <div class="chip-stats">
+            💰${(t.gold||0).toLocaleString()}
+            <span class="chip-pt"> ⭐${t.points||0}pt</span>
+            ${t.itemLevel>0?' +'+t.itemLevel+'강':''}
+          </div>
+        </div>
+      </div>
+    `).join('') || '<div style="color:#555;font-size:12px;">참가 팀 없음</div>';
+  }
+
+  // ── 이벤트 체크 ──────────────────────────────────────────
+  function checkEvent() {
+    const ev = gameState.lastEvent;
+    if (!ev || ev.ts === lastEventTs) return;
+    lastEventTs = ev.ts;
+
+    // 액션 연출 트리거
+    const action = gameState.selectedAction;
+    if (action) triggerActionEffect(action, ev);
+
+    // 팝업
+    if (ev.title) showPopup(ev);
+  }
+
+  function triggerActionEffect(action, ev) {
+    const img   = document.getElementById('heroImg');
+    const emoji = document.getElementById('heroEmoji');
+    const tid   = gameState.actingTeam || gameState.currentTeamTurn;
+    const team  = tid && teamsData[tid];
+    if (!team) return;
+
+    // 캐릭터 공격 모션
+    const animClass = JOB_ATTACK_ANIM[team.job] || 'anim-attack';
+    const target = img.style.display !== 'none' ? img : emoji;
+    target.classList.remove('anim-idle','anim-attack','anim-mage','anim-archer','anim-pirate','anim-heal','anim-hit');
+    void target.offsetWidth; // reflow
+    target.classList.add(animClass);
+
+    // 보스 피격
+    setTimeout(() => {
+      const boss = document.getElementById('bossEmoji');
+      boss.classList.remove('boss-anim-hit');
+      void boss.offsetWidth;
+      boss.classList.add('boss-anim-hit');
+
+      // 이펙트 숫자
+      if (ev.type === 'success')         spawnEffect(ev.msg || '성공!', 'gold-number', 55, 45);
+      if (ev.type === 'fail')            spawnEffect('실패...', 'dmg-number', 55, 45);
+      if (ev.type === 'enhance_success') spawnEffect('강화 성공! ⚡', 'gold-number', 30, 50);
+      if (ev.type === 'enhance_fail')    spawnEffect('강화 실패 💔', 'dmg-number', 30, 50);
+      if (ev.type === 'plunder')         spawnEffect('약탈! 🏴‍☠️', 'dmg-number', 55, 45);
+
+      // 슬래시 이펙트
+      if (['success','plunder'].includes(ev.type)) spawnSlash(52, 38);
+
+    }, 350);
+
+    // 아이들로 복귀
+    setTimeout(() => {
+      target.classList.remove(animClass,'anim-hit');
+      target.classList.add('anim-idle');
+      document.getElementById('bossEmoji').classList.remove('boss-anim-hit');
+    }, 1200);
+
+    // 로그
+    addLog(ev.title || action, ev.type === 'success' || ev.type === 'enhance_success' ? 'ok' : ev.type === 'plunder' ? 'plunder' : 'err');
+  }
+
+  function spawnEffect(text, cls, xPct, yPct) {
+    const el = document.createElement('div');
+    el.className = cls;
+    el.textContent = text;
+    el.style.cssText = `left:${xPct}%;top:${yPct}%;`;
+    document.getElementById('effectLayer').appendChild(el);
+    setTimeout(() => el.remove(), 1600);
+  }
+
+  function spawnSlash(xPct, yPct) {
+    const el = document.createElement('div');
+    el.className = 'slash-effect';
+    el.textContent = '⚡';
+    el.style.cssText = `left:${xPct}%;top:${yPct}%;`;
+    document.getElementById('effectLayer').appendChild(el);
+    setTimeout(() => el.remove(), 650);
+  }
+
+  // ── 이벤트 팝업 ──────────────────────────────────────────
+  const POPUP_ICONS = {
+    success:'🎉', fail:'💥', enhance_success:'⚡', enhance_fail:'💔',
+    fate:'🃏', plunder:'🏴‍☠️', gold2x:'💰', curse:'💀',
+    steal:'🦊', genius:'🧠', reverse:'🔄', allgold:'🎊'
+  };
+  function showPopup(ev) {
+    document.getElementById('popupIcon').textContent  = POPUP_ICONS[ev.type] || '🎊';
+    document.getElementById('popupTitle').textContent = ev.title || '이벤트!';
+    document.getElementById('popupMsg').textContent   = ev.msg   || '';
+    const popup = document.getElementById('eventPopup');
+    popup.classList.add('show');
+    setTimeout(() => popup.classList.remove('show'), 3000);
+  }
+
+  // ── 배틀 로그 ────────────────────────────────────────────
+  const logs = [];
+  function addLog(msg, type='') {
+    logs.unshift({ msg, type });
+    if (logs.length > 4) logs.pop();
+    document.getElementById('battleLog').innerHTML = logs.map(l =>
+      `<div class="log-entry ${l.type}">${l.msg}</div>`
+    ).join('');
+  }
+</script>
+</body>
+</html>
