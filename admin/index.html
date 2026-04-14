@@ -18,7 +18,7 @@
     .section { background: #1a1a2e; border: 1px solid #333; border-radius: 12px; padding: 14px; margin-bottom: 12px; }
     .section-title { font-size: 13px; font-weight: bold; color: #ffd700; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #333; }
 
-    .btn { padding: 10px 16px; border: none; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; transition: all 0.15s; }
+    .btn { padding: 10px 16px; border: none; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; transition: all 0.15s; line-height: 1.3; }
     .btn:hover { opacity: 0.85; transform: scale(0.98); }
     .btn-primary { background: #ffd700; color: #0f0f1a; }
     .btn-danger  { background: #e74c3c; color: white; }
@@ -41,6 +41,19 @@
     .sel-action.pending { color: #555; font-size: 11px; }
     .reset-sel-btn { font-size: 10px; color: #e74c3c; background: none; border: 1px solid #e74c3c44; border-radius: 4px; padding: 2px 6px; cursor: pointer; margin-top: 4px; }
     .reset-sel-btn:hover { background: #e74c3c22; }
+
+    /* 보스전 팀 선택 카드 */
+    .boss-sel-card { background: #0f0f1a; border: 1px solid #333; border-radius: 8px; padding: 8px 10px; font-size: 12px; cursor:pointer; transition: all 0.15s; }
+    .boss-sel-card:hover { border-color: #ffd700; }
+    .boss-sel-card.bsc-active { border-color: #ffd700; background: #1a1a0a; }
+    .boss-sel-card.bsc-attack { border-color: #e74c3c44; }
+    .boss-sel-card.bsc-item   { border-color: #9b59b644; }
+    .boss-sel-card.bsc-skip   { border-color: #55555544; }
+    .bsc-team   { font-weight: bold; margin-bottom: 3px; }
+    .bsc-choice { font-size: 11px; color: #aaa; }
+    .bsc-choice.atk  { color: #ff8888; }
+    .bsc-choice.itm  { color: #d98df5; }
+    .bsc-choice.skp  { color: #888; }
 
     .prob-bar-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
     .prob-bar-bg   { flex: 1; background: #333; border-radius: 999px; height: 8px; overflow: hidden; }
@@ -97,7 +110,6 @@
     .phase-result    { background: #0a1a2a; border: 1px solid #3498db; color: #7ecfff; }
     .phase-boss      { background: #2a0a0a; border: 1px solid #e74c3c; color: #ff8888; }
 
-    /* 경매 모달 */
     .modal-bg { display:none; position:fixed; inset:0; background:#000000cc; z-index:200; align-items:center; justify-content:center; }
     .modal-bg.show { display:flex; }
     .modal-box { background:#1a1a2e; border:2px solid #ffd700; border-radius:16px; padding:24px; width:90%; max-width:500px; max-height:80vh; overflow-y:auto; }
@@ -112,14 +124,26 @@
     .rarity-epic   { background:#9b59b633; color:#d98df5; border:1px solid #9b59b6; }
     .rarity-legend { background:#ffd70033; color:#ffd700; border:1px solid #ffd700; }
 
-    /* 경매 결과 */
     .auction-bid-row { display:flex; justify-content:space-between; align-items:center; padding:8px 10px; border-radius:6px; margin-bottom:6px; background:#0f0f1a; border:1px solid #333; font-size:12px; }
     .auction-bid-row.winner { border-color:#ffd700; background:#1a1a10; }
 
-    /* 라운드 어드밴티지 */
     .round-info-box { background:#0f0f1a; border:1px solid #333; border-radius:8px; padding:10px 12px; margin-bottom:10px; font-size:12px; }
     .round-advantage { color:#2ecc71; margin-bottom:4px; }
     .round-penalty   { color:#e74c3c; }
+
+    /* 보스전 컨트롤 강조 */
+    .boss-ctrl-btn {
+      flex: 1; min-width: 80px; padding: 14px 8px;
+      border: none; border-radius: 10px;
+      font-size: 13px; font-weight: bold; cursor: pointer;
+      text-align: center; line-height: 1.4;
+      transition: all 0.15s;
+    }
+    .boss-ctrl-btn:hover { transform: scale(1.04); opacity: 0.9; }
+    .bcb-attack  { background: #e74c3c; color: white; }
+    .bcb-skip    { background: #555;    color: white; }
+    .bcb-miss    { background: #3498db; color: white; }
+    .bcb-counter { background: #9b59b6; color: white; }
   </style>
 </head>
 <body>
@@ -229,10 +253,44 @@
 
   <!-- 보스전 -->
   <div class="section" id="bossSection" style="display:none;">
-    <div class="section-title">👹 보스 HP 관리</div>
+    <div class="section-title">👹 보스전 관리</div>
+
+    <!-- 보스 HP 바 -->
     <div class="boss-hp-bar"><div class="boss-hp-fill" id="bossHpFill" style="width:100%"></div></div>
     <div class="boss-hp-text" id="bossHpText">HP: - / -</div>
-    <div style="font-size:11px;color:#aaa;margin-top:8px;">팀 턴에 자동으로 보스 데미지가 계산됩니다. (기본 1,000 + 강화 보너스)</div>
+    <div style="font-size:11px;color:#aaa;margin-top:4px;margin-bottom:12px;">
+      기본 공격: 500 + 강화 보너스 | 보스 최대 HP: 20,000
+    </div>
+
+    <!-- 팀별 행동 선택 현황 -->
+    <div style="font-size:11px;color:#ffd700;font-weight:bold;margin-bottom:6px;">⚔️ 팀별 행동 선택 현황</div>
+    <div id="bossSelGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;margin-bottom:14px;"></div>
+
+    <!-- 현재 처리 중인 팀 -->
+    <div class="judge-team-box">
+      <div class="judge-team-name"   id="bossJudgeTeamName">대기 중...</div>
+      <div class="judge-team-action" id="bossJudgeTeamAction">팀을 선택하거나 다음팀 버튼을 누르세요</div>
+      <div class="judge-team-gold"   id="bossJudgeTeamGold"></div>
+    </div>
+
+    <!-- 보스전 전용 컨트롤 버튼 -->
+    <div style="font-size:11px;color:#aaa;margin-bottom:8px;">선택한 팀의 결과를 처리하세요</div>
+    <div class="btn-row" style="gap:8px;">
+      <button class="boss-ctrl-btn bcb-attack"  onclick="bossTurnAction('attack')">⚔️<br>공격하기<br><span style="font-size:10px;opacity:0.8;">HP 차감</span></button>
+      <button class="boss-ctrl-btn bcb-skip"    onclick="bossTurnAction('skip')">😴<br>한턴쉬기<br><span style="font-size:10px;opacity:0.8;">패널티 없음</span></button>
+      <button class="boss-ctrl-btn bcb-miss"    onclick="bossTurnAction('miss')">❌<br>MISS<br><span style="font-size:10px;opacity:0.8;">공격 빗나감</span></button>
+      <button class="boss-ctrl-btn bcb-counter" onclick="bossTurnAction('counter')">🔥<br>보스반격<br><span style="font-size:10px;opacity:0.8;">-2pt 차감</span></button>
+    </div>
+
+    <!-- HP 수동 조정 -->
+    <div style="margin-top:10px;padding-top:10px;border-top:1px solid #333;">
+      <div style="font-size:11px;color:#aaa;margin-bottom:6px;">HP 수동 조정</div>
+      <div class="gold-adj">
+        <input type="number" id="bossHpAdj" value="500">
+        <button class="btn btn-danger  btn-sm" onclick="adjustBossHp(-1)">HP 차감</button>
+        <button class="btn btn-success btn-sm" onclick="adjustBossHp(1)">HP 회복</button>
+      </div>
+    </div>
   </div>
 
   <!-- 최종 점수 -->
@@ -279,33 +337,35 @@
 
     const ENHANCE_COST = [0,500,1000,2000,3500,6000];
     const ENHANCE_PROB = [0,0.90,0.75,0.55,0.35,0.15];
-    const BASE_BOSS_DMG = 1000;
+    // ★ 보스전 기본 데미지 500, 강화 보너스 조정
+    const BASE_BOSS_DMG = 500;
+    const BOSS_MAX_HP   = 20000;
+    const BOSS_ENHANCE_BONUS = [0,50,100,150,250,400];
 
-    // 경매 아이템 목록
     const AUCTION_ITEMS = [
       { id:'a1', name:'전설의 강화석', rarity:'legend', icon:'💎',
-        effect:'아이템 강화 +1 즉시 적용 (확률 없이 100% 성공)',
+        effect:'아이템 강화 +1 즉시 (100% 성공)',
         apply: async (tid, team) => { await update(ref(db,`teams/${tid}`),{itemLevel:Math.min(5,(team.itemLevel||0)+1)}); }},
       { id:'a2', name:'황금 두루마리', rarity:'epic', icon:'📜',
-        effect:'다음 퀘스트 성공 시 골드 3배 획득',
+        effect:'다음 퀘스트 성공 시 골드 3배',
         apply: async (tid) => { await update(ref(db,`teams/${tid}`),{questMultiplier:3}); }},
       { id:'a3', name:'수호의 방패', rarity:'rare', icon:'🛡',
-        effect:'다음 강화 실패 시 골드 100% 환급 (1회)',
+        effect:'다음 강화 실패 시 골드 100% 환급',
         apply: async (tid) => { await update(ref(db,`teams/${tid}`),{enhanceShield:true}); }},
       { id:'a4', name:'약탈 방지 부적', rarity:'rare', icon:'🧿',
-        effect:'해적의 약탈 1회 완전 차단',
+        effect:'해적 약탈 1회 완전 차단',
         apply: async (tid) => { await update(ref(db,`teams/${tid}`),{plunderShield:true}); }},
       { id:'a5', name:'보스 슬레이어', rarity:'epic', icon:'⚡',
-        effect:'보스전 데미지 영구 +500',
-        apply: async (tid, team) => { await update(ref(db,`teams/${tid}`),{bonusBossDmg:(team.bonusBossDmg||0)+500}); }},
+        effect:'보스전 데미지 영구 +200',
+        apply: async (tid, team) => { await update(ref(db,`teams/${tid}`),{bonusBossDmg:(team.bonusBossDmg||0)+200}); }},
       { id:'a6', name:'운명의 주사위', rarity:'legend', icon:'🎲',
-        effect:'운명카드 3장 중 1장 선택 권한 획득',
+        effect:'운명카드 3장 중 1장 선택',
         apply: async (tid) => { await update(ref(db,`teams/${tid}`),{fateBonus:3}); }},
     ];
 
     const EVENTS = [
       { key:'gold2x',  icon:'💰', name:'황금의 축복',  desc:'현재 팀 골드 2배',           color:'#f39c12',
-        apply: (sels, teams) => { const aid=currentJudgeTid; const t=teamsData[aid]; if(t){update(ref(db,`teams/${aid}`),{gold:(t.gold||0)*2});} return `황금의 축복 발동! ${t?.name||''} 골드 2배!`; }},
+        apply: () => { const aid=currentJudgeTid; const t=teamsData[aid]; if(t){update(ref(db,`teams/${aid}`),{gold:(t.gold||0)*2});} return `황금의 축복! ${t?.name||''} 골드 2배!`; }},
       { key:'curse',   icon:'💀', name:'저주의 덫',    desc:'1위 팀 골드 -20%',           color:'#e74c3c',
         apply: () => { const s=Object.entries(teamsData).sort((a,b)=>(b[1].gold||0)-(a[1].gold||0)); if(!s.length)return''; const[id,t]=s[0]; update(ref(db,`teams/${id}`),{gold:Math.max(0,(t.gold||0)*0.8)}); return `저주의 덫! ${t.name} 골드 -20%`; }},
       { key:'steal',   icon:'🦊', name:'부의 이전',    desc:'1위→꼴찌 골드 10% 이전',    color:'#9b59b6',
@@ -324,8 +384,9 @@
     let currentJudgeAction = null;
     let pendingResult      = null;
     let selectedAuctionItem = null;
+    let bossCurrentTid     = null; // 보스전 현재 처리 팀
 
-    // ── Firebase 감지 ────────────────────────────────────────
+    // ── Firebase 감지 ──
     onValue(ref(db,'teams'), (snap) => {
       teamsData = snap.val() || {};
       renderTeamList();
@@ -333,6 +394,7 @@
       document.getElementById('statTeams').textContent = Object.keys(teamsData).length;
       renderSelectionGrid();
       updateAuctionBids();
+      if (gameState.phase === 'boss') renderBossSelGrid();
     });
 
     onValue(ref(db,'gameState'), (snap) => {
@@ -342,9 +404,10 @@
       updatePhaseBanner();
       renderSelectionGrid();
       updateBossSection();
+      if (gameState.phase === 'boss') renderBossSelGrid();
     });
 
-    // ── 상태바 ───────────────────────────────────────────────
+    // ── 상태바 ──
     function updateStatusBar() {
       document.getElementById('statRound').textContent = gameState.currentRound || '-';
       document.getElementById('statPhase').textContent = gameState.phase || '대기';
@@ -354,7 +417,7 @@
         `${teams.filter(id=>sels[id]).length}/${teams.length}`;
     }
 
-    // ── 라운드 알약 + 어드밴티지 ────────────────────────────
+    // ── 라운드 알약 ──
     function updateRoundPills() {
       const cur = gameState.currentRound || 0;
       document.getElementById('roundPills').innerHTML = ROUNDS_INFO.map((r,i) => {
@@ -364,20 +427,16 @@
         else cls += ' locked';
         return `<div class="${cls}">${r.name}</div>`;
       }).join('');
-
-      // 현재 라운드 어드밴티지 표시
       const info = ROUNDS_INFO[cur];
       const box  = document.getElementById('roundInfoBox');
       if (info && (info.advantage || info.penalty)) {
         box.style.display = 'block';
         document.getElementById('roundAdvantage').textContent = info.advantage;
         document.getElementById('roundPenalty').textContent   = info.penalty;
-      } else {
-        box.style.display = 'none';
-      }
+      } else { box.style.display = 'none'; }
     }
 
-    // ── 페이즈 배너 ──────────────────────────────────────────
+    // ── 페이즈 배너 ──
     function updatePhaseBanner() {
       const phase  = gameState.phase;
       const banner = document.getElementById('phaseBanner');
@@ -385,14 +444,15 @@
         selecting: { cls:'phase-selecting', text:'🟢 전 팀 동시 선택 중 — 모든 팀 선택 완료 후 "결과 처리 시작" 클릭' },
         judging:   { cls:'phase-judging',   text:'🟡 결과 처리 중 — 팀별 판정 후 "다음 팀 →" 클릭' },
         result:    { cls:'phase-result',    text:'🔵 라운드 마무리 — "다음 라운드" 클릭' },
-        boss:      { cls:'phase-boss',      text:'🔴 보스전 진행 중!' },
+        boss:      { cls:'phase-boss',      text:'🔴 보스전 진행 중! — 팀별 행동을 선택하고 보스전 컨트롤 버튼으로 처리하세요' },
       };
       const m = msgs[phase];
       banner.innerHTML = m ? `<div class="phase-banner ${m.cls}">${m.text}</div>` : '';
     }
 
-    // ── 선택 현황 (재선택 버튼 포함) ────────────────────────
+    // ── 선택 현황 ──
     function renderSelectionGrid() {
+      if (gameState.phase === 'boss') return; // 보스전 중엔 별도 그리드 사용
       const sels  = gameState.selections || {};
       const teams = Object.entries(teamsData);
       const done  = teams.filter(([id])=>sels[id]).length;
@@ -413,19 +473,114 @@
       }).join('') || '<div style="color:#555;font-size:12px;">참가 팀 없음</div>';
     }
 
-    // ── 팀 선택 재설정 (5번 요구사항) ───────────────────────
+    // ── 보스전 선택 현황 그리드 ──
+    function renderBossSelGrid() {
+      const bossSels = gameState.bossSelections || {};
+      const teams = Object.entries(teamsData);
+      const actionLabel = { attack:'⚔️ 공격', item:'✨ 아이템', skip:'😴 쉬기' };
+      const actionCls   = { attack:'bsc-attack', item:'bsc-item', skip:'bsc-skip' };
+
+      document.getElementById('bossSelGrid').innerHTML = teams.map(([id, t]) => {
+        const choice = bossSels[id];
+        const isActive = id === bossCurrentTid;
+        return `<div class="boss-sel-card ${actionCls[choice]||''} ${isActive?'bsc-active':''}"
+          onclick="setBossCurrentTeam('${id}')">
+          <div class="bsc-team">${JOB_ICONS[t.job]||'❓'} ${t.name}</div>
+          <div class="bsc-choice ${choice==='attack'?'atk':choice==='item'?'itm':choice==='skip'?'skp':''}">
+            ${choice ? actionLabel[choice] : '⏳ 대기 중'}
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // ── 보스전 현재 팀 설정 ──
+    window.setBossCurrentTeam = function(tid) {
+      bossCurrentTid = tid;
+      const team = teamsData[tid];
+      if (!team) return;
+      document.getElementById('bossJudgeTeamName').textContent =
+        `${JOB_ICONS[team.job]||'❓'} ${team.name} (${JOB_NAMES[team.job]||'?'})`;
+      const bossSels = gameState.bossSelections || {};
+      const choice   = bossSels[tid];
+      const actionLabel = { attack:'⚔️ 공격하기 선택', item:'✨ 아이템 사용 선택', skip:'😴 한 턴 쉬기 선택' };
+      document.getElementById('bossJudgeTeamAction').textContent =
+        choice ? actionLabel[choice] || choice : '⏳ 아직 선택 안 함';
+      const dmg = BASE_BOSS_DMG + (BOSS_ENHANCE_BONUS[team.itemLevel||0]||0) + (team.bonusBossDmg||0);
+      document.getElementById('bossJudgeTeamGold').textContent =
+        `골드: ${(team.gold||0).toLocaleString()} | 누적 데미지: ${(team.bossDamage||0).toLocaleString()} | 공격 시 데미지: ${dmg}`;
+      renderBossSelGrid();
+    };
+
+    // ── 보스전 턴 처리 ──
+    window.bossTurnAction = async function(actionType) {
+      if (!bossCurrentTid) { alert('처리할 팀을 선택하세요! (팀 카드를 눌러주세요)'); return; }
+      const team = teamsData[bossCurrentTid];
+      if (!team) return;
+
+      const dmg = BASE_BOSS_DMG + (BOSS_ENHANCE_BONUS[team.itemLevel||0]||0) + (team.bonusBossDmg||0);
+      const curHP = gameState.bossHP || 0;
+
+      if (actionType === 'attack') {
+        const newHP   = Math.max(0, curHP - dmg);
+        const newDmg  = (team.bossDamage || 0) + dmg;
+        await update(ref(db, `teams/${bossCurrentTid}`), { bossDamage: newDmg });
+        await update(ref(db, 'gameState'), {
+          bossHP: newHP,
+          lastEvent: { type:'boss_attack', icon:'💥', title:`${team.name} 공격!`, msg:`-${dmg} 데미지! 보스 HP: ${newHP.toLocaleString()}`, dmg, ts: Date.now() }
+        });
+        addLog(`${team.name} 공격 -${dmg}DMG (남은HP:${newHP.toLocaleString()})`, 'ok');
+        if (newHP <= 0) { addLog('🎉 보스 처치!', 'sys'); }
+
+      } else if (actionType === 'skip') {
+        await update(ref(db, 'gameState'), {
+          lastEvent: { type:'boss_skip', icon:'😴', title:`${team.name} 한 턴 쉬기`, msg:'이번 턴 패스!', ts: Date.now() }
+        });
+        addLog(`${team.name} 한 턴 쉬기`, 'sys');
+
+      } else if (actionType === 'miss') {
+        await update(ref(db, 'gameState'), {
+          lastEvent: { type:'boss_miss', icon:'❌', title:`${team.name} MISS!`, msg:'공격이 빗나갔습니다!', ts: Date.now() }
+        });
+        addLog(`${team.name} MISS`, 'err');
+
+      } else if (actionType === 'counter') {
+        const newPt = Math.max(0, (team.points || 0) - 2);
+        await update(ref(db, `teams/${bossCurrentTid}`), { points: newPt });
+        await update(ref(db, 'gameState'), {
+          lastEvent: { type:'boss_counter', icon:'🔥', title:`보스 반격! ${team.name}`, msg:`${team.name} -2pt! (${newPt}pt)`, ts: Date.now() }
+        });
+        addLog(`보스 반격! ${team.name} -2pt`, 'err');
+      }
+
+      // 처리 후 다음 팀으로 자동 이동 (선택 사항)
+      bossCurrentTid = null;
+      renderBossSelGrid();
+      document.getElementById('bossJudgeTeamName').textContent   = '처리 완료 — 다음 팀을 선택하세요';
+      document.getElementById('bossJudgeTeamAction').textContent = '위 팀 카드를 눌러 선택하세요';
+      document.getElementById('bossJudgeTeamGold').textContent   = '';
+    };
+
+    // ── HP 수동 조정 ──
+    window.adjustBossHp = async function(sign) {
+      const amt = parseInt(document.getElementById('bossHpAdj').value) || 0;
+      const newHP = Math.max(0, Math.min(BOSS_MAX_HP, (gameState.bossHP || 0) + sign * amt));
+      await update(ref(db, 'gameState'), { bossHP: newHP });
+      addLog(`보스 HP ${sign>0?'+':''}${sign*amt} → ${newHP.toLocaleString()}`, 'sys');
+    };
+
+    // ── 팀 선택 재설정 ──
     window.resetTeamSelection = async function(tid) {
       const team = teamsData[tid];
       if (!team) return;
-      if (!confirm(`${team.name}의 선택을 취소하고 재선택 기회를 줄까요?`)) return;
+      if (!confirm(`${team.name}의 선택을 취소할까요?`)) return;
       const snap = await get(ref(db,'gameState/selections'));
       const sels = snap.val() || {};
       delete sels[tid];
       await set(ref(db,'gameState/selections'), sels);
-      addLog(`${team.name} 선택 취소 — 재선택 가능`, 'sys');
+      addLog(`${team.name} 선택 취소`, 'sys');
     };
 
-    // ── 게임 시작 ────────────────────────────────────────────
+    // ── 게임 시작 ──
     window.startGame = function() {
       const teams = Object.keys(teamsData);
       if (!teams.length) { alert('참가 팀이 없습니다!'); return; }
@@ -434,28 +589,20 @@
         currentTeamTurn:null, currentTeamIndex:0,
         selectedAction:null, actingTeam:null
       });
-      // 라운드 시작 시 어드밴티지 브로드캐스트
       broadcastRoundInfo(1);
       currentJudgeTid=null; currentJudgeAction=null; pendingResult=null;
       renderJudgeBox();
       addLog('게임 시작! R1 — 전 팀 동시 선택 시작','sys');
     };
 
-    // ── 라운드 정보 브로드캐스트 (행사장/참가자 화면용) ─────
     function broadcastRoundInfo(roundNum) {
       const info = ROUNDS_INFO[roundNum] || {};
       update(ref(db,'gameState'), {
-        roundInfo: {
-          num: roundNum,
-          name: info.name || `R${roundNum}`,
-          advantage: info.advantage || '',
-          penalty: info.penalty || '',
-          ts: Date.now()
-        }
+        roundInfo: { num:roundNum, name:info.name||`R${roundNum}`, advantage:info.advantage||'', penalty:info.penalty||'', ts:Date.now() }
       });
     }
 
-    // ── 결과 처리 시작 ───────────────────────────────────────
+    // ── 결과 처리 시작 ──
     window.startJudging = async function() {
       const teams = Object.keys(teamsData);
       if (!teams.length) { alert('참가 팀이 없습니다!'); return; }
@@ -469,28 +616,23 @@
         if (!confirm(`아직 선택 안 한 팀: ${names}\n그래도 결과 처리를 시작할까요?`)) return;
       }
 
-      // R5 스페셜: 꼴찌 팀 골드 +500, 1위 팀 골드 -10%
       const round = gameState.currentRound || 1;
       if (round === 5) {
         const sorted = Object.entries(teamsData).sort((a,b)=>(b[1].gold||0)-(a[1].gold||0));
         if (sorted.length >= 2) {
-          const [topId,top] = sorted[0];
-          const [lastId,last] = sorted[sorted.length-1];
+          const [topId,top] = sorted[0]; const [lastId,last] = sorted[sorted.length-1];
           await update(ref(db,`teams/${topId}`),{gold:Math.max(0,Math.round((top.gold||0)*0.9))});
           await update(ref(db,`teams/${lastId}`),{gold:(last.gold||0)+500});
-          addLog('R5 스페셜 — 1위 골드 -10%, 꼴찌 +500골드 적용','sys');
+          addLog('R5 스페셜 — 1위 골드 -10%, 꼴찌 +500골드','sys');
         }
       }
 
       const firstId = teams[0];
-      await update(ref(db,'gameState'),{
-        phase:'judging', currentTeamTurn:firstId, currentTeamIndex:0
-      });
+      await update(ref(db,'gameState'),{phase:'judging',currentTeamTurn:firstId,currentTeamIndex:0});
       setCurrentJudge(firstId, 0);
       addLog('결과 처리 시작!','sys');
     };
 
-    // ── 현재 판정 팀 설정 ────────────────────────────────────
     function setCurrentJudge(tid, idx) {
       const sels   = gameState.selections || {};
       const action = sels[tid];
@@ -506,27 +648,20 @@
       document.getElementById('judgeTeamGold').textContent =
         team ? `현재 골드: ${(team.gold||0).toLocaleString()} | 강화: +${team.itemLevel||0}` : '';
 
-      // 경매 선택한 팀은 별도 처리
       if (action === 'auction') {
         document.getElementById('judgeBox').innerHTML = `
           <div style="background:#1a1a10;border:1px solid #ffd70055;border-radius:10px;padding:14px;">
             <div style="font-size:14px;color:#ffd700;margin-bottom:8px;">🏆 경매 참여팀</div>
-            <div style="font-size:12px;color:#aaa;">이 팀은 경매에 참여했습니다.<br>경매 섹션에서 낙찰 처리 후 "다음 팀 →"을 누르세요.</div>
+            <div style="font-size:12px;color:#aaa;">경매 섹션에서 낙찰 처리 후 "다음 팀 →"을 누르세요.</div>
           </div>`;
-        renderSelectionGrid();
-        return;
+        renderSelectionGrid(); return;
       }
 
-      if (action && team) {
-        pendingResult = calcResult(action, tid, team);
-        renderJudgeBox();
-      } else {
-        renderJudgeBox();
-      }
+      if (action && team) { pendingResult = calcResult(action, tid, team); renderJudgeBox(); }
+      else renderJudgeBox();
       renderSelectionGrid();
     }
 
-    // ── 다음 팀 → ────────────────────────────────────────────
     window.nextTurn = function() {
       if (gameState.phase !== 'judging') { alert('"결과 처리 시작" 버튼을 먼저 누르세요!'); return; }
       const teams = Object.keys(teamsData);
@@ -547,11 +682,10 @@
       addLog(`다음 팀 → ${teamsData[nextId]?.name||'?'}`,'sys');
     };
 
-    // ── 확률 계산 ────────────────────────────────────────────
     function calcResult(action, tid, team) {
       const round = gameState.currentRound || 1;
-      const r3penalty = round === 3 ? -0.10 : 0; // R3 강화 -10%
-      const r4penalty = round === 4 ? -0.10 : 0; // R4 일반퀘 -10%
+      const r3penalty = round === 3 ? -0.10 : 0;
+      const r4penalty = round === 4 ? -0.10 : 0;
 
       if (action === 'quest') {
         let prob = 0.70 + r4penalty;
@@ -569,14 +703,12 @@
         }
         return { action, tid, success, prob, goldGain, autoQuest,
           label:'퀘스트 도전',
-          resultText: success
-            ? `✅ 성공 → +${goldGain.toLocaleString()} 골드${autoQuest?' (자동성공)':''}`
+          resultText: success ? `✅ 성공 → +${goldGain.toLocaleString()} 골드${autoQuest?' (자동성공)':''}`
             : `❌ 실패${round>=2?' → -50 골드':''}` };
 
       } else if (action === 'enhance') {
         const lvl  = team.itemLevel||0;
-        if (lvl>=5) return {action,tid,success:false,prob:0,cost:0,refund:0,
-          label:'아이템 강화',resultText:'⚠️ 이미 최대 강화 (+5)'};
+        if (lvl>=5) return {action,tid,success:false,prob:0,cost:0,refund:0,label:'아이템 강화',resultText:'⚠️ 이미 최대 강화 (+5)'};
         let prob  = ENHANCE_PROB[lvl+1] + r3penalty;
         prob = Math.max(0.05, prob);
         const cost    = Math.round(ENHANCE_COST[lvl+1]*(team.job==='warrior'?0.9:1));
@@ -593,14 +725,12 @@
         const pool  = ['황금의 축복 (골드 2배)','저주의 덫 (타팀 -20%)','천재의 영감 (자동성공)','부의 이전','전설의 부활','행운의 연속 (+300골드)'];
         const drawn = [];
         for (let i=0;i<fateBonus;i++) drawn.push(pool[Math.floor(Math.random()*pool.length)]);
-        const picked = drawn[0]; // 관리자가 여러 장 중 1장 선택 (현재는 첫번째)
-        return {action,tid,success:true,prob:1,fateCard:picked,drawn,
-          label:'운명카드',resultText:`🃏 ${picked}`};
+        const picked = drawn[0];
+        return {action,tid,success:true,prob:1,fateCard:picked,drawn,label:'운명카드',resultText:`🃏 ${picked}`};
 
       } else if (action === 'plunder') {
         const targets = Object.entries(teamsData).filter(([id])=>id!==tid);
         if (!targets.length) return {action,tid,success:false,prob:0,label:'약탈',resultText:'⚠️ 약탈할 팀 없음'};
-        // 방패 있는 팀 제외
         const validTargets = targets.filter(([,t])=>!t.plunderShield);
         if (!validTargets.length) return {action,tid,success:false,prob:0,label:'약탈',resultText:'⚠️ 모든 팀이 약탈 방지 중'};
         const [victimId,victim] = validTargets[Math.floor(Math.random()*validTargets.length)];
@@ -612,7 +742,6 @@
       return null;
     }
 
-    // ── 판정 박스 렌더링 ─────────────────────────────────────
     function renderJudgeBox() {
       const box = document.getElementById('judgeBox');
       if (!pendingResult) {
@@ -655,7 +784,6 @@
       addLog('다시 굴리기','sys');
     };
 
-    // ── 확정 ─────────────────────────────────────────────────
     window.confirmResult = async function() {
       const r=pendingResult;
       if (!r){alert('판정할 결과가 없습니다!');return;}
@@ -668,47 +796,28 @@
           let updates = {};
           if (r.success) {
             updates.gold = (team.gold||0)+r.goldGain;
-            if (r.autoQuest) updates.autoQuest = null; // 자동성공 소모
-            if (team.questMultiplier) updates.questMultiplier = null; // 배율 소모
+            if (r.autoQuest) updates.autoQuest = null;
+            if (team.questMultiplier) updates.questMultiplier = null;
           } else {
-            // R2 이후 퀘스트 실패 시 -50골드
             if (round >= 2) updates.gold = Math.max(0,(team.gold||0)-50);
           }
           await update(ref(db,`teams/${r.tid}`), updates);
-          update(ref(db,'gameState'),{lastEvent:{
-            type:r.success?'success':'fail',
-            title:r.success?'퀘스트 성공! 🎉':'퀘스트 실패 💥',
-            msg:r.success?`${team.name} +${r.goldGain.toLocaleString()} 골드!`:`${team.name} 아쉽지만 다음 기회에!`,
-            teamName:team.name, ts:Date.now()
-          }});
-          addLog(`${team.name} 퀘스트 ${r.success?'성공 +'+r.goldGain.toLocaleString()+'G':'실패'}${!r.success&&round>=2?' -50G':''}`, r.success?'ok':'err');
+          update(ref(db,'gameState'),{lastEvent:{type:r.success?'success':'fail',title:r.success?'퀘스트 성공! 🎉':'퀘스트 실패 💥',msg:r.success?`${team.name} +${r.goldGain.toLocaleString()} 골드!`:`${team.name} 아쉽지만 다음 기회에!`,teamName:team.name,ts:Date.now()}});
+          addLog(`${team.name} 퀘스트 ${r.success?'성공 +'+r.goldGain.toLocaleString()+'G':'실패'}${!r.success&&round>=2?' -50G':''}`,r.success?'ok':'err');
 
         } else if (r.action==='enhance') {
           const lvl=team.itemLevel||0, cost=r.cost||0;
           if ((team.gold||0)<cost){alert(`${team.name} 골드 부족!`);return;}
           let updates = {};
-          if (r.success) {
-            updates.itemLevel = lvl+1;
-            updates.gold = Math.max(0,(team.gold||0)-cost);
-          } else {
-            updates.gold = Math.max(0,(team.gold||0)-(cost-(r.refund||0)));
-            if (r.hasShield) updates.enhanceShield = null; // 방패 소모
-          }
+          if (r.success) { updates.itemLevel=lvl+1; updates.gold=Math.max(0,(team.gold||0)-cost); }
+          else { updates.gold=Math.max(0,(team.gold||0)-(cost-(r.refund||0))); if(r.hasShield)updates.enhanceShield=null; }
           await update(ref(db,`teams/${r.tid}`), updates);
-          update(ref(db,'gameState'),{lastEvent:{
-            type:r.success?'enhance_success':'enhance_fail',
-            title:r.success?`강화 성공! ⚡`:'강화 실패 💔',
-            msg:r.resultText, teamName:team.name, ts:Date.now()
-          }});
+          update(ref(db,'gameState'),{lastEvent:{type:r.success?'enhance_success':'enhance_fail',title:r.success?'강화 성공! ⚡':'강화 실패 💔',msg:r.resultText,teamName:team.name,ts:Date.now()}});
           addLog(`${team.name} 강화 ${r.success?'성공 +'+(`${lvl+1}`)+'강':'실패'}`,r.success?'ok':'err');
 
         } else if (r.action==='fate') {
-          // 운명카드 즉시 발동 (1번 요구사항)
           await applyFateCard(r.fateCard, r.tid, team);
-          update(ref(db,'gameState'),{lastEvent:{
-            type:'fate',title:'운명카드 🃏',msg:`${team.name}: ${r.fateCard}`,
-            teamName:team.name, fateCard:r.fateCard, ts:Date.now()
-          }});
+          update(ref(db,'gameState'),{lastEvent:{type:'fate',title:'운명카드 🃏',msg:`${team.name}: ${r.fateCard}`,teamName:team.name,fateCard:r.fateCard,ts:Date.now()}});
           addLog(`${team.name} 운명카드: ${r.fateCard}`,'ok');
 
         } else if (r.action==='plunder'&&r.loot) {
@@ -717,9 +826,7 @@
             await update(ref(db,`teams/${r.victimId}`),{gold:Math.max(0,(victim.gold||0)-r.loot)});
             await update(ref(db,`teams/${r.tid}`),{gold:(team.gold||0)+r.loot});
           }
-          update(ref(db,'gameState'),{lastEvent:{
-            type:'plunder',title:'약탈 성공! 🏴‍☠️',msg:r.resultText,teamName:team.name,ts:Date.now()
-          }});
+          update(ref(db,'gameState'),{lastEvent:{type:'plunder',title:'약탈 성공! 🏴‍☠️',msg:r.resultText,teamName:team.name,ts:Date.now()}});
           addLog(`${team.name}→${r.victimName} 약탈 +${r.loot.toLocaleString()}G`,'ok');
         }
 
@@ -728,45 +835,26 @@
       } catch(e) { addLog(`오류: ${e.message}`,'err'); }
     };
 
-    // ── 운명카드 효과 즉시 적용 ──────────────────────────────
     async function applyFateCard(card, tid, team) {
       const sorted = Object.entries(teamsData).sort((a,b)=>(b[1].gold||0)-(a[1].gold||0));
-      if (card.includes('황금의 축복')) {
-        await update(ref(db,`teams/${tid}`),{gold:(team.gold||0)*2});
-      } else if (card.includes('저주의 덫')) {
-        if (sorted.length) { const[id,t]=sorted[0]; await update(ref(db,`teams/${id}`),{gold:Math.max(0,(t.gold||0)*0.8)}); }
-      } else if (card.includes('천재의 영감')) {
-        await update(ref(db,`teams/${tid}`),{autoQuest:true});
-      } else if (card.includes('부의 이전')) {
-        if (sorted.length>=2) {
-          const[tid2,top]=sorted[0];const[lid,last]=sorted[sorted.length-1];
-          const a=Math.round((top.gold||0)*0.1);
-          await update(ref(db,`teams/${tid2}`),{gold:(top.gold||0)-a});
-          await update(ref(db,`teams/${lid}`),{gold:(last.gold||0)+a});
-        }
-      } else if (card.includes('전설의 부활')) {
-        // 이전 퀘스트 실패 보상 — 골드 500 지급
-        await update(ref(db,`teams/${tid}`),{gold:(team.gold||0)+500});
-      } else if (card.includes('행운의 연속')) {
-        await update(ref(db,`teams/${tid}`),{gold:(team.gold||0)+300});
-      }
+      if (card.includes('황금의 축복'))    { await update(ref(db,`teams/${tid}`),{gold:(team.gold||0)*2}); }
+      else if (card.includes('저주의 덫')) { if(sorted.length){const[id,t]=sorted[0];await update(ref(db,`teams/${id}`),{gold:Math.max(0,(t.gold||0)*0.8)});} }
+      else if (card.includes('천재의 영감')){ await update(ref(db,`teams/${tid}`),{autoQuest:true}); }
+      else if (card.includes('부의 이전')) { if(sorted.length>=2){const[tid2,top]=sorted[0];const[lid,last]=sorted[sorted.length-1];const a=Math.round((top.gold||0)*0.1);await update(ref(db,`teams/${tid2}`),{gold:(top.gold||0)-a});await update(ref(db,`teams/${lid}`),{gold:(last.gold||0)+a});} }
+      else if (card.includes('전설의 부활')){ await update(ref(db,`teams/${tid}`),{gold:(team.gold||0)+500}); }
+      else if (card.includes('행운의 연속')){ await update(ref(db,`teams/${tid}`),{gold:(team.gold||0)+300}); }
     }
 
-    // ── 다음 라운드 ──────────────────────────────────────────
     window.nextRound = function() {
       calcRoundPoints();
       const next=(gameState.currentRound||1)+1;
       if (next>6){alert('모든 라운드 완료! 보스전을 시작하세요.');return;}
-      update(ref(db,'gameState'),{
-        currentRound:next, phase:'selecting', selections:null,
-        currentTeamTurn:null, currentTeamIndex:0,
-        selectedAction:null, actingTeam:null
-      });
+      update(ref(db,'gameState'),{currentRound:next,phase:'selecting',selections:null,currentTeamTurn:null,currentTeamIndex:0,selectedAction:null,actingTeam:null});
       broadcastRoundInfo(next);
-      currentJudgeTid=null; currentJudgeAction=null; pendingResult=null;
-      document.getElementById('judgeTeamName').textContent   = '대기 중...';
-      document.getElementById('judgeTeamAction').textContent = '결과 처리 시작 버튼을 누르세요';
-      document.getElementById('judgeTeamGold').textContent   = '';
+      currentJudgeTid=null;currentJudgeAction=null;pendingResult=null;
+      document.getElementById('judgeTeamName').textContent  ='대기 중...';
+      document.getElementById('judgeTeamAction').textContent='결과 처리 시작 버튼을 누르세요';
+      document.getElementById('judgeTeamGold').textContent  ='';
       renderJudgeBox();
       addLog(`R${next} 시작!`,'sys');
     };
@@ -781,39 +869,25 @@
       addLog(`R${round} 포인트 지급${bonus?' (+1보너스)':''}`,'sys');
     }
 
-    // ── 보스전 ───────────────────────────────────────────────
+    // ── 보스전 시작 ── (HP 20,000 고정)
     window.startBoss = function() {
-      const cnt=Object.keys(teamsData).length;
-      const bossHP=cnt*10000;
-      update(ref(db,'gameState'),{phase:'boss',bossHP,bossHPMax:bossHP,selections:null});
+      update(ref(db,'gameState'),{phase:'boss', bossHP:BOSS_MAX_HP, bossHPMax:BOSS_MAX_HP, selections:null, bossSelections:null});
       document.getElementById('bossSection').style.display='block';
       document.getElementById('finalSection').style.display='block';
       broadcastRoundInfo(6);
-      addLog(`보스전 시작! HP: ${bossHP.toLocaleString()}`,'sys');
+      addLog(`보스전 시작! HP: ${BOSS_MAX_HP.toLocaleString()}`,'sys');
     };
 
     function updateBossSection() {
       if (gameState.phase!=='boss') return;
       document.getElementById('bossSection').style.display='block';
       document.getElementById('finalSection').style.display='block';
-      const hp=gameState.bossHP||0, max=gameState.bossHPMax||1;
+      const hp=gameState.bossHP||0, max=gameState.bossHPMax||BOSS_MAX_HP;
       document.getElementById('bossHpFill').style.width=Math.max(0,(hp/max)*100)+'%';
       document.getElementById('bossHpText').textContent=`HP: ${hp.toLocaleString()} / ${max.toLocaleString()}`;
     }
 
-    // 보스 데미지 자동 계산 — confirmResult에서 quest 성공 시 자동 호출
-    async function applyBossDamage(tid, team) {
-      if (gameState.phase !== 'boss') return;
-      const enhanceBonus = [0,100,200,300,500,800][team.itemLevel||0]||0;
-      const bonusBossDmg = team.bonusBossDmg || 0;
-      const dmg = BASE_BOSS_DMG + enhanceBonus + bonusBossDmg;
-      const newHP = Math.max(0,(gameState.bossHP||0)-dmg);
-      await update(ref(db,`teams/${tid}`),{bossDamage:(team.bossDamage||0)+dmg});
-      await update(ref(db,'gameState'),{bossHP:newHP});
-      addLog(`${team.name} 보스 -${dmg.toLocaleString()} DMG (기본1000+강화${enhanceBonus})`,'ok');
-    }
-
-    // ── 경매 시스템 ──────────────────────────────────────────
+    // ── 경매 ──
     window.openAuctionModal = function() {
       document.getElementById('auctionItemList').innerHTML = AUCTION_ITEMS.map(item=>`
         <div class="item-card" id="item_${item.id}" onclick="selectAuctionItem('${item.id}')">
@@ -824,47 +898,22 @@
       selectedAuctionItem = null;
       document.getElementById('auctionModal').classList.add('show');
     };
-
     window.selectAuctionItem = function(id) {
       document.querySelectorAll('.item-card').forEach(c=>c.classList.remove('selected'));
       document.getElementById('item_'+id).classList.add('selected');
       selectedAuctionItem = AUCTION_ITEMS.find(i=>i.id===id);
     };
-
-    window.closeAuctionModal = function() {
-      document.getElementById('auctionModal').classList.remove('show');
-    };
+    window.closeAuctionModal = function() { document.getElementById('auctionModal').classList.remove('show'); };
 
     window.startAuction = async function() {
       if (!selectedAuctionItem){alert('아이템을 선택하세요!');return;}
-      // 경매 참여 팀 찾기 (selections에서 auction 선택한 팀)
       const sels = gameState.selections || {};
       const auctionTeams = Object.entries(teamsData).filter(([id])=>sels[id]==='auction').map(([id])=>id);
-
-      await update(ref(db,'gameState'),{
-        auction: {
-          active: true,
-          itemId:   selectedAuctionItem.id,
-          itemName: selectedAuctionItem.name,
-          itemIcon: selectedAuctionItem.icon,
-          itemEffect: selectedAuctionItem.effect,
-          teams: auctionTeams,
-          bids: {}
-        }
-      });
-
-      // 경매 참여 팀들에게 경매 화면 표시
-      update(ref(db,'gameState'),{lastEvent:{
-        type:'auctionStart',
-        title:`경매 시작! ${selectedAuctionItem.icon} ${selectedAuctionItem.name}`,
-        msg: selectedAuctionItem.effect,
-        ts: Date.now()
-      }});
-
+      await update(ref(db,'gameState'),{auction:{active:true,itemId:selectedAuctionItem.id,itemName:selectedAuctionItem.name,itemIcon:selectedAuctionItem.icon,itemEffect:selectedAuctionItem.effect,teams:auctionTeams,bids:{}}});
+      update(ref(db,'gameState'),{lastEvent:{type:'auctionStart',title:`경매 시작! ${selectedAuctionItem.icon} ${selectedAuctionItem.name}`,msg:selectedAuctionItem.effect,ts:Date.now()}});
       closeAuctionModal();
       document.getElementById('auctionStatus').style.display='block';
-      document.getElementById('auctionItemName').textContent =
-        `${selectedAuctionItem.icon} ${selectedAuctionItem.name} — ${selectedAuctionItem.effect}`;
+      document.getElementById('auctionItemName').textContent=`${selectedAuctionItem.icon} ${selectedAuctionItem.name} — ${selectedAuctionItem.effect}`;
       addLog(`경매 시작: ${selectedAuctionItem.name}`,'sys');
     };
 
@@ -875,76 +924,46 @@
       const teams = auction.teams || [];
       const bidList = document.getElementById('auctionBidList');
       if (!bidList) return;
-
-      const rows = teams.map(tid=>{
-        const t   = teamsData[tid];
-        const bid = bids[tid];
-        return {tid, name:t?.name||'?', bid:bid||null};
-      }).sort((a,b)=>(b.bid||0)-(a.bid||0));
-
+      const rows = teams.map(tid=>({tid,name:teamsData[tid]?.name||'?',bid:bids[tid]||null})).sort((a,b)=>(b.bid||0)-(a.bid||0));
       bidList.innerHTML = rows.map((r,i)=>`
         <div class="auction-bid-row ${i===0&&r.bid?'winner':''}">
           <span>${i===0&&r.bid?'👑':''} ${r.name}</span>
-          <span style="color:${r.bid?'#ffd700':'#555'};">
-            ${r.bid?r.bid.toLocaleString()+' 골드':'입찰 대기 중...'}
-          </span>
+          <span style="color:${r.bid?'#ffd700':'#555'};">${r.bid?r.bid.toLocaleString()+' 골드':'입찰 대기 중...'}</span>
         </div>`).join('');
     }
 
     window.closeAuction = async function() {
       const auction = gameState.auction;
       if (!auction) return;
-      const bids  = auction.bids || {};
-      const teams = auction.teams || [];
+      const bids=auction.bids||{}, teams=auction.teams||[];
       if (!teams.length){alert('경매 참여 팀이 없습니다.');return;}
-
-      // 최고 입찰자 찾기
-      let winnerId = null, maxBid = 0;
+      let winnerId=null, maxBid=0;
       teams.forEach(tid=>{if((bids[tid]||0)>maxBid){maxBid=bids[tid]||0;winnerId=tid;}});
-
       if (!winnerId){alert('입찰 금액이 없습니다.');return;}
-      const winner = teamsData[winnerId];
-      const item   = AUCTION_ITEMS.find(i=>i.id===auction.itemId);
-
-      // 낙찰자 골드 차감 + 아이템 효과 적용
-      if ((winner.gold||0) < maxBid){alert(`${winner.name} 골드 부족!`);return;}
+      const winner=teamsData[winnerId], item=AUCTION_ITEMS.find(i=>i.id===auction.itemId);
+      if ((winner.gold||0)<maxBid){alert(`${winner.name} 골드 부족!`);return;}
       await update(ref(db,`teams/${winnerId}`),{gold:(winner.gold||0)-maxBid});
       if (item) await item.apply(winnerId, winner);
-
-      // 경매 종료
-      await update(ref(db,'gameState'),{
-        auction:{active:false, itemId:null, itemName:null, bids:null, teams:null},
-        lastEvent:{
-          type:'auctionEnd',
-          title:`낙찰! ${auction.itemIcon||'🏆'} ${auction.itemName}`,
-          msg:`${winner.name} 팀이 ${maxBid.toLocaleString()} 골드에 낙찰!`,
-          ts:Date.now()
-        }
-      });
+      await update(ref(db,'gameState'),{auction:{active:false,itemId:null,itemName:null,bids:null,teams:null},lastEvent:{type:'auctionEnd',title:`낙찰! ${auction.itemIcon||'🏆'} ${auction.itemName}`,msg:`${winner.name} 팀이 ${maxBid.toLocaleString()} 골드에 낙찰!`,ts:Date.now()}});
       document.getElementById('auctionStatus').style.display='none';
       addLog(`경매 낙찰: ${winner.name} — ${maxBid.toLocaleString()}골드`,'ok');
     };
-
     window.cancelAuction = async function() {
       await update(ref(db,'gameState'),{auction:{active:false}});
       document.getElementById('auctionStatus').style.display='none';
       addLog('경매 취소','sys');
     };
 
-    // ── 최종 점수 ────────────────────────────────────────────
+    // ── 최종 점수 ──
     window.calcFinal = function() {
       const totalDmg=Math.max(1,Object.values(teamsData).reduce((s,t)=>s+(t.bossDamage||0),0));
       const results=Object.entries(teamsData).map(([id,t])=>{
-        const ptScore=(t.points||0)*0.5;
-        const goldScore=Math.min(10,Math.floor((t.gold||0)/1000))*0.2;
-        const bossScore=((t.bossDamage||0)/totalDmg)*15*0.3;
+        const ptScore=(t.points||0)*0.5, goldScore=Math.min(10,Math.floor((t.gold||0)/1000))*0.2, bossScore=((t.bossDamage||0)/totalDmg)*15*0.3;
         return{name:t.name,job:t.job,ptScore,goldScore,bossScore,total:ptScore+goldScore+bossScore};
       }).sort((a,b)=>b.total-a.total);
       document.getElementById('finalScores').innerHTML=results.map((r,i)=>`
         <div style="padding:8px;border-radius:8px;margin-bottom:6px;background:#0f0f1a;border:1px solid ${i===0?'#ffd700':'#333'}">
-          <div style="font-size:13px;font-weight:bold;color:${i===0?'#ffd700':'white'}">
-            ${['🥇','🥈','🥉'][i]||''} ${r.name} (${JOB_NAMES[r.job]||'?'})
-          </div>
+          <div style="font-size:13px;font-weight:bold;color:${i===0?'#ffd700':'white'}">${['🥇','🥈','🥉'][i]||''} ${r.name} (${JOB_NAMES[r.job]||'?'})</div>
           <div style="font-size:11px;color:#aaa;margin-top:4px;">
             포인트 ${r.ptScore.toFixed(1)} + 골드 ${r.goldScore.toFixed(1)} + 보스 ${r.bossScore.toFixed(1)}
             = <span style="color:#ffd700;font-weight:bold;">${r.total.toFixed(2)}점</span>
@@ -953,43 +972,32 @@
       addLog('최종 점수 계산 완료','sys');
     };
 
-    // ── 골드/포인트 조정 ─────────────────────────────────────
     window.adjustGold = function(sign) {
-      const tid=document.getElementById('goldTeamSel').value;
-      const amount=parseInt(document.getElementById('goldAmount').value)||0;
-      const team=teamsData[tid];if(!team)return;
+      const tid=document.getElementById('goldTeamSel').value, amount=parseInt(document.getElementById('goldAmount').value)||0, team=teamsData[tid];
+      if(!team)return;
       update(ref(db,`teams/${tid}`),{gold:Math.max(0,(team.gold||0)+sign*amount)});
       addLog(`${team.name} 골드 ${sign>0?'+':''}${sign*amount}`,sign>0?'ok':'err');
     };
-
     window.adjustPoints = function(sign) {
-      const tid=document.getElementById('ptTeamSel').value;
-      const amount=parseInt(document.getElementById('ptAmount').value)||0;
-      const team=teamsData[tid];if(!team)return;
+      const tid=document.getElementById('ptTeamSel').value, amount=parseInt(document.getElementById('ptAmount').value)||0, team=teamsData[tid];
+      if(!team)return;
       update(ref(db,`teams/${tid}`),{points:Math.max(0,(team.points||0)+sign*amount)});
       addLog(`${team.name} 포인트 ${sign>0?'+':''}${sign*amount}`,sign>0?'ok':'err');
     };
 
-    // ── 이벤트 카드 (즉시 발동) ──────────────────────────────
     document.getElementById('eventGrid').innerHTML=EVENTS.map(e=>`
       <div class="event-btn" onclick="fireEvent('${e.key}')">
         <div class="event-icon">${e.icon}</div>
         <div class="event-name" style="color:${e.color}">${e.name}</div>
         <div class="event-desc">${e.desc}</div>
       </div>`).join('');
-
     window.fireEvent = function(key) {
-      const ev = EVENTS.find(e=>e.key===key);
-      if (!ev) return;
-      const resultMsg = ev.apply();
-      update(ref(db,'gameState'),{lastEvent:{
-        type:key, icon:ev.icon, title:`${ev.icon} ${ev.name}`,
-        msg:resultMsg||ev.desc, ts:Date.now()
-      }});
+      const ev=EVENTS.find(e=>e.key===key); if(!ev)return;
+      const resultMsg=ev.apply();
+      update(ref(db,'gameState'),{lastEvent:{type:key,icon:ev.icon,title:`${ev.icon} ${ev.name}`,msg:resultMsg||ev.desc,ts:Date.now()}});
       addLog(`이벤트 카드: ${ev.name} — ${resultMsg}`,'sys');
     };
 
-    // ── 팀 목록 / 셀렉트 ────────────────────────────────────
     function renderTeamList() {
       const sorted=Object.entries(teamsData).sort((a,b)=>(b[1].points||0)-(a[1].points||0));
       document.getElementById('teamList').innerHTML=sorted.map(([id,t],i)=>`
@@ -1001,18 +1009,16 @@
           <div style="font-size:16px;">${['🥇','🥈','🥉'][i]||(i+1)+'위'}</div>
         </div>`).join('')||'<div style="color:#555;font-size:12px;padding:8px;">참가 팀 없음</div>';
     }
-
     function renderSelects() {
       const opts=Object.entries(teamsData).map(([id,t])=>`<option value="${id}">${t.name} (${JOB_NAMES[t.job]||'?'})</option>`).join('');
       ['goldTeamSel','ptTeamSel'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
     }
 
-    // ── 리셋 ─────────────────────────────────────────────────
     window.toggleReset=function(){const el=document.getElementById('resetConfirm');el.style.display=el.style.display==='none'?'block':'none';};
     window.resetGame=async function(){
       await set(ref(db,'teams'),null);
       await set(ref(db,'gameState'),{phase:'lobby',currentRound:0});
-      currentJudgeTid=null;currentJudgeAction=null;pendingResult=null;
+      currentJudgeTid=null;currentJudgeAction=null;pendingResult=null;bossCurrentTid=null;
       renderJudgeBox();
       document.getElementById('resetConfirm').style.display='none';
       document.getElementById('bossSection').style.display='none';
@@ -1021,7 +1027,6 @@
       addLog('게임 리셋 완료','sys');
     };
 
-    // ── 로그 ─────────────────────────────────────────────────
     function addLog(msg,type=''){
       const box=document.getElementById('logBox');
       const time=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
@@ -1030,7 +1035,6 @@
       line.textContent=`[${time}] ${msg}`;
       box.prepend(line);
     }
-
     addLog('관리자 페이지 로드됨','sys');
   </script>
 </body>

@@ -206,9 +206,9 @@
     .team-info-text { flex: 1; }
     .team-name-display { font-size: 20px; font-weight: bold; }
     .team-job-display  { font-size: 13px; color: #aaa; margin-top: 2px; }
-    .team-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .team-stats { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; }
     .stat-box   { background: #0f0f1a; border-radius: 8px; padding: 8px; text-align: center; }
-    .stat-val   { font-size: 18px; font-weight: bold; color: #ffd700; }
+    .stat-val   { font-size: 16px; font-weight: bold; color: #ffd700; }
     .stat-label { font-size: 10px; color: #aaa; margin-top: 2px; }
 
     /* 보유 아이템 배지 */
@@ -289,6 +289,7 @@
       border-radius: 12px; cursor: pointer; margin-top: 16px;
     }
     .detail-select-btn.pirate { background: #e74c3c; color: white; }
+    .detail-select-btn.boss-btn { background: #e74c3c; color: white; }
 
     /* 결과 현황 */
     .results-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
@@ -305,6 +306,172 @@
     @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 #e67e2244} 50%{box-shadow:0 0 0 8px #e67e2200} }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
     .blink { animation: blink 1.5s infinite; }
+
+    /* ── 보스전 UI ── */
+    .boss-screen { width: 100%; }
+
+    .boss-header {
+      background: linear-gradient(135deg, #2a0a0a, #1a0505);
+      border: 2px solid #e74c3c;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+    .boss-name {
+      font-size: 20px; font-weight: bold; color: #ff6b6b;
+      margin-bottom: 10px; letter-spacing: 2px;
+    }
+    .boss-hp-bar-wrap {
+      background: #1a0505; border-radius: 999px; height: 18px;
+      overflow: hidden; border: 1px solid #e74c3c44; margin-bottom: 6px;
+    }
+    .boss-hp-bar-fill {
+      height: 100%; border-radius: 999px;
+      background: linear-gradient(90deg, #e74c3c, #ff6b6b);
+      transition: width 1s ease;
+    }
+    .boss-hp-text {
+      font-size: 13px; color: #ff8888;
+    }
+
+    .boss-my-dmg {
+      background: #1a0a0a; border: 1px solid #e74c3c44;
+      border-radius: 10px; padding: 10px 14px; margin-bottom: 14px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .boss-my-dmg-icon { font-size: 24px; }
+    .boss-my-dmg-text { flex: 1; }
+    .boss-my-dmg-label { font-size: 11px; color: #aaa; }
+    .boss-my-dmg-val { font-size: 18px; font-weight: bold; color: #ff8888; }
+
+    /* 보스전 액션 섹션 */
+    .boss-action-title {
+      font-size: 15px; font-weight: bold; color: #ff8888;
+      text-align: center; margin-bottom: 4px;
+    }
+    .boss-action-hint {
+      font-size: 11px; color: #666; text-align: center; margin-bottom: 12px;
+    }
+    .boss-action-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+      margin-bottom: 14px;
+    }
+    .boss-action-card {
+      background: #1a0808; border: 2px solid #e74c3c55;
+      border-radius: 12px; padding: 14px 10px;
+      text-align: center; cursor: pointer; transition: all 0.2s;
+    }
+    .boss-action-card:hover { border-color: #e74c3c; transform: scale(1.02); }
+    .boss-action-card.selected-boss-action {
+      border-color: #e74c3c; background: #2a0a0a;
+      box-shadow: 0 0 12px #e74c3c44;
+    }
+    .boss-action-card.disabled-card { opacity: 0.4; cursor: not-allowed; }
+    .boss-action-card.disabled-card:hover { transform: none; border-color: #e74c3c55; }
+    .boss-action-icon { font-size: 30px; margin-bottom: 6px; }
+    .boss-action-name { font-size: 13px; font-weight: bold; color: #ff8888; margin-bottom: 4px; }
+    .boss-action-desc { font-size: 10px; color: #aaa; line-height: 1.4; }
+
+    /* 아이템 사용 섹션 */
+    .boss-item-section {
+      background: #0f0f1a; border: 1px solid #333;
+      border-radius: 12px; padding: 14px; margin-bottom: 14px;
+    }
+    .boss-item-title {
+      font-size: 13px; font-weight: bold; color: #ffd700;
+      margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+    }
+    .boss-item-list { display: flex; flex-direction: column; gap: 8px; }
+    .boss-item-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 10px; background: #1a1a2e;
+      border-radius: 8px; border: 1px solid #333;
+    }
+    .boss-item-row.no-item { opacity: 0.4; }
+    .boss-item-icon { font-size: 20px; min-width: 28px; text-align: center; }
+    .boss-item-info { flex: 1; }
+    .boss-item-name { font-size: 12px; font-weight: bold; color: #ddd; }
+    .boss-item-effect { font-size: 10px; color: #aaa; margin-top: 1px; }
+    .boss-item-use-btn {
+      padding: 6px 14px; border: none; border-radius: 6px;
+      font-size: 11px; font-weight: bold; cursor: pointer;
+      background: #ffd700; color: #0f0f1a; white-space: nowrap;
+    }
+    .boss-item-use-btn:disabled {
+      background: #333; color: #666; cursor: not-allowed;
+    }
+    .boss-item-used-badge {
+      padding: 4px 10px; background: #2ecc7133; color: #2ecc71;
+      border-radius: 6px; font-size: 10px; font-weight: bold;
+      border: 1px solid #2ecc7155;
+    }
+
+    /* 보스전 제출 */
+    .boss-submit-wrap { margin-top: 4px; }
+    .boss-submit-btn {
+      width: 100%; padding: 16px; font-size: 18px; font-weight: bold;
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
+      color: white; border: none; border-radius: 12px;
+      cursor: pointer; transition: all 0.2s;
+      box-shadow: 0 4px 15px #e74c3c44;
+    }
+    .boss-submit-btn:hover { transform: scale(1.02); box-shadow: 0 6px 20px #e74c3c66; }
+    .boss-submit-btn:disabled { background: #333; color: #666; cursor: not-allowed; box-shadow: none; transform: none; }
+
+    /* 보스전 선택 완료 상태 */
+    .boss-selected-info {
+      background: #1a0a0a; border: 2px solid #e74c3c;
+      border-radius: 12px; padding: 16px; text-align: center;
+    }
+    .boss-selected-icon { font-size: 36px; margin-bottom: 8px; }
+    .boss-selected-title { font-size: 16px; font-weight: bold; color: #ff8888; margin-bottom: 4px; }
+    .boss-selected-desc { font-size: 12px; color: #aaa; }
+
+    /* 점수 시스템 안내 */
+    .score-guide {
+      background: #0f1a0f; border: 1px solid #2ecc7144;
+      border-radius: 12px; padding: 14px; margin-top: 14px;
+    }
+    .score-guide-title {
+      font-size: 13px; font-weight: bold; color: #2ecc71;
+      margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+    }
+    .score-guide-list { display: flex; flex-direction: column; gap: 6px; }
+    .score-guide-row {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 12px; padding: 4px 0;
+      border-bottom: 1px solid #ffffff08;
+    }
+    .score-guide-row:last-child { border-bottom: none; }
+    .score-guide-label { color: #aaa; }
+    .score-guide-val { color: #2ecc71; font-weight: bold; }
+
+    /* 운명 카드 선택 팝업 (마법사용) */
+    #fateChoiceOverlay {
+      display: none; position: fixed; inset: 0;
+      background: #000000ee; z-index: 400;
+      align-items: center; justify-content: center;
+      flex-direction: column;
+    }
+    #fateChoiceOverlay.show { display: flex; }
+    .fate-choice-box {
+      background: #1a1a2e; border: 3px solid #9b59b6;
+      border-radius: 20px; padding: 28px; text-align: center;
+      animation: popIn 0.3s ease; max-width: 360px; width: 90%;
+    }
+    .fate-choice-title { font-size: 20px; font-weight: bold; color: #d98df5; margin-bottom: 6px; }
+    .fate-choice-sub { font-size: 12px; color: #aaa; margin-bottom: 20px; }
+    .fate-cards-row { display: flex; gap: 12px; justify-content: center; }
+    .fate-card-choice {
+      flex: 1; background: #0f0f1a; border: 2px solid #9b59b655;
+      border-radius: 12px; padding: 16px 10px; cursor: pointer;
+      transition: all 0.2s; max-width: 140px;
+    }
+    .fate-card-choice:hover { border-color: #d98df5; transform: scale(1.04); }
+    .fate-card-icon { font-size: 36px; margin-bottom: 8px; }
+    .fate-card-name { font-size: 13px; font-weight: bold; color: #d98df5; margin-bottom: 4px; }
+    .fate-card-effect { font-size: 10px; color: #aaa; line-height: 1.4; }
   </style>
 </head>
 <body>
@@ -406,6 +573,15 @@
     </div>
   </div>
 
+  <!-- 운명카드 선택 팝업 (마법사 전용) -->
+  <div id="fateChoiceOverlay">
+    <div class="fate-choice-box">
+      <div class="fate-choice-title">🃏 운명카드 선택</div>
+      <div class="fate-choice-sub">마법사의 예언으로 2장 중 1장을 선택하세요!</div>
+      <div class="fate-cards-row" id="fateCardsRow"></div>
+    </div>
+  </div>
+
   <!-- 상세 팝업 -->
   <div id="detailPopup" onclick="closeDetail(event)">
     <div class="detail-sheet">
@@ -430,6 +606,7 @@
         <div class="stat-box"><div class="stat-val" id="myGold">1,000</div><div class="stat-label">💰 골드</div></div>
         <div class="stat-box"><div class="stat-val" id="myPoints">0</div><div class="stat-label">⭐ 포인트</div></div>
         <div class="stat-box"><div class="stat-val" id="myItemLevel">없음</div><div class="stat-label">🔨 강화</div></div>
+        <div class="stat-box"><div class="stat-val" id="myBossDmg">0</div><div class="stat-label">💥 보스 기여</div></div>
       </div>
       <div class="item-badges" id="myItemBadges"></div>
     </div>
@@ -439,6 +616,8 @@
       <p class="action-hint">카드를 꾹 누르면 상세 정보를 볼 수 있어요</p>
       <div class="action-grid" id="actionGrid"></div>
     </div>
+    <!-- 보스전 전용 UI -->
+    <div id="bossActionSection" style="display:none;"></div>
   </div>
 
   <script type="module">
@@ -456,11 +635,46 @@
     const ENHANCE_PROB = [0,0.90,0.75,0.55,0.35,0.15];
     const ACTION_NAMES = { quest:'퀘스트 도전', enhance:'아이템 강화', fate:'운명카드', auction:'경매', plunder:'약탈' };
 
+    // 운명카드 목록
+    const FATE_CARDS = [
+      { key:'gold2x',   icon:'💰', name:'황금의 축복',  effect:'내 팀 골드 2배', points:'+5점' },
+      { key:'curse',    icon:'💀', name:'저주의 덫',    effect:'1위 팀 골드 -20%', points:'+3점' },
+      { key:'genius',   icon:'🧠', name:'천재의 영감',  effect:'다음 퀘스트 자동성공', points:'+5점' },
+      { key:'steal',    icon:'🦊', name:'부의 이전',    effect:'1위→꼴찌 골드 이전', points:'+3점' },
+      { key:'revival',  icon:'🔄', name:'전설의 부활',  effect:'+500 골드 획득', points:'+2점' },
+      { key:'lucky',    icon:'🎲', name:'행운의 연속',  effect:'+300 골드 획득', points:'+2점' },
+    ];
+
+    // 아이템 정보
+    const ITEM_INFO = {
+      autoQuest:    { icon:'⚡', name:'자동성공 카드',  effect:'다음 퀘스트 100% 성공', bossEffect:'보스 공격 +200 추가 데미지' },
+      questMultiplier:{ icon:'🎯', name:'골드 배율 카드', effect:`골드 획득 배율 적용`, bossEffect:'보스 공격 후 골드 보너스' },
+      enhanceShield:{ icon:'🛡', name:'강화 방패',     effect:'강화 실패 시 골드 보존', bossEffect:'보스 공격 시 방어막 +100' },
+      plunderShield:{ icon:'🧿', name:'약탈 방지 부적', effect:'약탈 완전 차단 1회',   bossEffect:'보스의 역공격 1회 방어' },
+      bonusBossDmg: { icon:'💥', name:'보스 데미지 부스터', effect:'보스 추가 데미지',    bossEffect:'보너스 데미지 즉시 적용' },
+      fateBonus:    { icon:'🎲', name:'운명카드 추가권', effect:'운명카드 추가 선택',   bossEffect:'보스전에서 운명카드 +1장' },
+    };
+
+    // 점수 시스템
+    // admin calcRoundPoints 기준: 골드 순위로 포인트 지급
+    const POINT_GUIDE = [
+      { label:'라운드 종료 골드 1위', val:'+3점' },
+      { label:'라운드 종료 골드 2위', val:'+2점' },
+      { label:'라운드 종료 골드 3위', val:'+1점' },
+      { label:'R3 ★ 운명의 밤 — 전 팀 보너스', val:'+1점 추가' },
+      { label:'R5 ★ 역전의 기회 — 전 팀 동점', val:'+3점' },
+      { label:'최종: 포인트 환산', val:'점수×0.5' },
+      { label:'최종: 보스 데미지 기여율', val:'최대 4.5점' },
+    ];
+
     let myTeamId = null, selectedJob = null, rolledJob = null;
     let myTeamData = {}, gameStateData = {}, allTeams = {};
     let pendingActionKey = null, holdTimer = null;
     let lastEventTs = null, lastRoundInfoTs = null;
     let auctionBidSubmitted = false;
+    let bossActionSelected = null; // 보스전에서 선택한 액션
+    let bossActionSubmitted = false; // 보스전 제출 여부
+    let usedItemsThisRound = {}; // 이번 보스 라운드에 사용한 아이템
 
     // ── 직업 선택 ───────────────────────────────────────────
     window.selectJob = function(jobKey, el) {
@@ -545,13 +759,14 @@
       document.getElementById('myGold').textContent      = (d.gold||0).toLocaleString();
       document.getElementById('myPoints').textContent    = d.points||0;
       document.getElementById('myItemLevel').textContent = d.itemLevel>0?'+'+d.itemLevel+'강':'없음';
+      document.getElementById('myBossDmg').textContent   = (d.bossDamage||0).toLocaleString();
       // 보유 아이템 배지
       const badges = [];
       if (d.autoQuest)       badges.push('⚡ 자동성공 대기');
       if (d.questMultiplier) badges.push(`🎯 골드 ${d.questMultiplier}배`);
       if (d.enhanceShield)   badges.push('🛡 강화 방패');
       if (d.plunderShield)   badges.push('🧿 약탈 방지');
-      if (d.bonusBossDmg)    badges.push(`⚡ 보스 +${d.bonusBossDmg}`);
+      if (d.bonusBossDmg)    badges.push(`💥 보스 +${d.bonusBossDmg}`);
       if (d.fateBonus)       badges.push(`🎲 운명카드 ${d.fateBonus}장`);
       document.getElementById('myItemBadges').innerHTML =
         badges.map(b=>`<span class="item-badge">${b}</span>`).join('');
@@ -567,24 +782,23 @@
       checkAuction();
     });
 
-    // ── 이벤트 팝업 표시 (1번 요구사항) ────────────────────
+    // ── 이벤트 팝업 표시 ────────────────────────────────────
     function checkEventPopup() {
       const ev = gameStateData.lastEvent;
       if (!ev||ev.ts===lastEventTs) return;
       lastEventTs = ev.ts;
-
-      // 경매 시작은 경매 팝업으로 따로 처리
       if (ev.type==='auctionStart'||ev.type==='auctionEnd') return;
 
       const box = document.getElementById('eventPopupBox');
       const icons = {
         success:'🎉', fail:'💥', enhance_success:'⚡', enhance_fail:'💔',
         fate:'🃏', plunder:'🏴‍☠️', gold2x:'💰', curse:'💀',
-        steal:'🦊', genius:'🧠', reverse:'🔄', allgold:'🎉'
+        steal:'🦊', genius:'🧠', reverse:'🔄', allgold:'🎉',
+        boss_attack:'💥', boss_item:'✨'
       };
       box.className = 'event-popup-box';
       if (['fail','enhance_fail','curse','plunder'].includes(ev.type)) box.classList.add('danger');
-      if (['success','enhance_success','allgold','gold2x'].includes(ev.type)) box.classList.add('success');
+      if (['success','enhance_success','allgold','gold2x','boss_attack'].includes(ev.type)) box.classList.add('success');
 
       document.getElementById('eventPopupIcon').textContent  = ev.icon||icons[ev.type]||'🎊';
       document.getElementById('eventPopupTitle').textContent = ev.title||'이벤트!';
@@ -596,7 +810,7 @@
       document.getElementById('eventOverlay').classList.remove('show');
     };
 
-    // ── 라운드 정보 팝업 (4번 요구사항) ────────────────────
+    // ── 라운드 정보 팝업 ────────────────────────────────────
     function checkRoundInfo() {
       const ri = gameStateData.roundInfo;
       if (!ri||ri.ts===lastRoundInfoTs) return;
@@ -609,29 +823,28 @@
       document.getElementById('roundPopupPenalty').innerHTML = ri.penalty
         ? `<div class="round-info-item round-penalty">${ri.penalty}</div>` : '';
       document.getElementById('roundOverlay').classList.add('show');
+
+      // 새 라운드 시작 시 보스전 상태 초기화
+      bossActionSelected = null;
+      bossActionSubmitted = false;
+      usedItemsThisRound = {};
     }
 
     window.closeRoundOverlay = function() {
       document.getElementById('roundOverlay').classList.remove('show');
     };
 
-    // ── 경매 팝업 (2번 요구사항) ────────────────────────────
+    // ── 경매 팝업 ────────────────────────────────────────────
     function checkAuction() {
       const auction = gameStateData.auction;
-      const sels    = gameStateData.selections||{};
-      const myPick  = sels[myTeamId];
-
       if (auction&&auction.active) {
-        // 내가 경매 참여한 팀인지 확인
         const teams = auction.teams||[];
         const isParticipant = teams.includes(myTeamId);
-
         if (isParticipant) {
           document.getElementById('auctionOverlay').classList.add('show');
           renderAuctionUI(auction);
         }
       } else {
-        // 경매 종료
         if (document.getElementById('auctionOverlay').classList.contains('show')) {
           document.getElementById('auctionOverlay').classList.remove('show');
           auctionBidSubmitted = false;
@@ -703,7 +916,9 @@
       const myPick  = sels[myTeamId];
       const phaseArea     = document.getElementById('phaseArea');
       const actionSection = document.getElementById('actionSection');
+      const bossSection   = document.getElementById('bossActionSection');
       actionSection.style.display = 'none';
+      bossSection.style.display   = 'none';
 
       if (!phase||phase==='lobby') {
         phaseArea.innerHTML=`<div class="phase-box waiting"><div class="phase-icon">⏳</div><div class="phase-title">게임 시작 대기 중</div><div class="phase-desc">MC가 게임을 시작하면 알려드릴게요!</div></div>`;
@@ -744,11 +959,262 @@
         phaseArea.innerHTML=`<div class="phase-box waiting"><div class="phase-icon">📊</div><div class="phase-title">라운드 결과 집계 중</div><div class="phase-desc">행사장 화면에서 결과를 확인하세요!<br>잠시 후 다음 라운드가 시작됩니다.</div></div>`;
 
       } else if (phase==='boss') {
-        phaseArea.innerHTML=`<div class="phase-box" style="background:#2a0a0a;border:2px solid #e74c3c;"><div class="phase-icon">👹</div><div class="phase-title" style="color:#ff8888;">보스전 진행 중!</div><div class="phase-desc">행사장 화면에서 보스 HP를 확인하세요!</div></div>`;
+        // 보스전 페이즈
+        phaseArea.innerHTML = '';
+        bossSection.style.display = 'block';
+        renderBossPhase(state);
       }
     }
 
-    // ── 액션 카드 렌더링 ────────────────────────────────────
+    // ── 보스전 UI 렌더링 ────────────────────────────────────
+    // BASE_BOSS_DMG = 500, 보스 HP = 20,000
+    const BASE_BOSS_DMG = 500;
+
+    function renderBossPhase(state) {
+      const bossSection = document.getElementById('bossActionSection');
+      const bossHp    = state.bossHP    ?? 20000;
+      const bossMaxHp = state.bossHPMax ?? 20000;
+      const hpPct  = Math.max(0, Math.round((bossHp / bossMaxHp) * 100));
+      const myDmg  = myTeamData.bossDamage || 0;
+      const bossSels   = state.bossSelections || {};
+      const myBossPick = bossSels[myTeamId];
+
+      // 강화 보너스 (500 기준)
+      const lvl         = myTeamData.itemLevel || 0;
+      const dmgBonus    = [0, 50, 100, 150, 250, 400][lvl] || 0;
+      const bonusFromItem = myTeamData.bonusBossDmg || 0;
+      const totalDmg    = BASE_BOSS_DMG + dmgBonus + bonusFromItem;
+      const hpColor     = hpPct > 50 ? '#e74c3c' : hpPct > 25 ? '#e67e22' : '#ff4444';
+
+      // 한 턴 쉬기 사용 여부
+      const skippedBefore = myTeamData.bossSkipUsed || false;
+
+      let html = `
+        <div class="boss-screen">
+          <div class="boss-header">
+            <div class="boss-name">👹 던전 보스</div>
+            <div class="boss-hp-bar-wrap">
+              <div class="boss-hp-bar-fill" style="width:${hpPct}%;background:linear-gradient(90deg,${hpColor},#ff6b6b);"></div>
+            </div>
+            <div class="boss-hp-text">HP: ${bossHp.toLocaleString()} / ${bossMaxHp.toLocaleString()} (${hpPct}%)</div>
+          </div>
+          <div class="boss-my-dmg">
+            <div class="boss-my-dmg-icon">💥</div>
+            <div class="boss-my-dmg-text">
+              <div class="boss-my-dmg-label">우리 팀 누적 기여 데미지</div>
+              <div class="boss-my-dmg-val">${myDmg.toLocaleString()}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:10px;color:#aaa;">기본 공격 시 데미지</div>
+              <div style="font-size:14px;font-weight:bold;color:#ff8888;">-${totalDmg.toLocaleString()}</div>
+            </div>
+          </div>`;
+
+      if (myBossPick && bossActionSubmitted) {
+        const actionLabel = { attack:'공격하기', item:'아이템 사용', skip:'한 턴 쉬기' };
+        const actionIcon  = { attack:'⚔️', item:'✨', skip:'😴' };
+        html += `
+          <div class="boss-selected-info">
+            <div class="boss-selected-icon">${actionIcon[myBossPick] || '✅'}</div>
+            <div class="boss-selected-title">"${actionLabel[myBossPick] || myBossPick}" 선택 완료!</div>
+            <div class="boss-selected-desc blink">MC의 진행을 기다리세요...</div>
+          </div>`;
+      } else {
+        // ── 3가지 선택지 ──
+        html += `
+          <div class="boss-action-title">⚔️ 이번 턴 행동을 선택하세요!</div>
+          <div class="boss-action-hint">팀원과 의논 후 하나를 고르세요</div>
+          <div class="boss-action-grid" style="grid-template-columns:1fr 1fr 1fr;">
+            <div class="boss-action-card ${bossActionSelected==='attack'?'selected-boss-action':''}"
+              onclick="selectBossAction('attack')">
+              <div class="boss-action-icon">⚔️</div>
+              <div class="boss-action-name">공격하기</div>
+              <div class="boss-action-desc">
+                기본 ${BASE_BOSS_DMG} 데미지<br>
+                <span style="color:#ffd700;">+${lvl}강 → +${dmgBonus}</span><br>
+                <span style="color:#ff8888;font-weight:bold;">총 ${totalDmg}</span>
+              </div>
+            </div>
+            <div class="boss-action-card ${bossActionSelected==='item'?'selected-boss-action':''}"
+              onclick="selectBossAction('item')">
+              <div class="boss-action-icon">✨</div>
+              <div class="boss-action-name">아이템 사용</div>
+              <div class="boss-action-desc">
+                보유 아이템을<br>사용합니다<br>
+                <span style="color:#7ecfff;">아래 목록 확인</span>
+              </div>
+            </div>
+            <div class="boss-action-card ${skippedBefore?'disabled-card':''} ${bossActionSelected==='skip'?'selected-boss-action':''}"
+              onclick="${skippedBefore?'':"selectBossAction('skip')"}">
+              <div class="boss-action-icon">${skippedBefore?'🚫':'😴'}</div>
+              <div class="boss-action-name">한 턴 쉬기</div>
+              <div class="boss-action-desc">
+                ${skippedBefore?'<span style="color:#e74c3c;">이미 사용함</span>':'보스전 1회만<br>사용 가능<br><span style="color:#aaa;">페널티 없음</span>'}
+              </div>
+            </div>
+          </div>`;
+
+        // 아이템 사용 섹션 (item 선택 시 강조)
+        html += renderBossItemSection(bossActionSelected === 'item');
+
+        html += `
+          <div class="boss-submit-wrap">
+            <button class="boss-submit-btn" id="bossSubmitBtn"
+              onclick="submitBossAction()"
+              ${!bossActionSelected?'disabled':''}>
+              ${bossActionSelected==='attack'?'⚔️ 공격!':bossActionSelected==='item'?'✨ 아이템 사용!':bossActionSelected==='skip'?'😴 이번 턴 쉬기':'행동을 선택하세요'}
+            </button>
+          </div>`;
+      }
+
+      html += renderScoreGuide();
+      html += `</div>`;
+      bossSection.innerHTML = html;
+    }
+
+    function renderBossItemSection(highlighted=false) {
+      const items = [];
+      if (myTeamData.autoQuest)       items.push('autoQuest');
+      if (myTeamData.questMultiplier) items.push('questMultiplier');
+      if (myTeamData.enhanceShield)   items.push('enhanceShield');
+      if (myTeamData.plunderShield)   items.push('plunderShield');
+      if (myTeamData.bonusBossDmg)    items.push('bonusBossDmg');
+      if (myTeamData.fateBonus)       items.push('fateBonus');
+
+      let html = `<div class="boss-item-section">
+        <div class="boss-item-title" style="${highlighted?'color:#7ecfff;border-color:#7ecfff55':''}">✨ 보유 아이템 사용 ${highlighted?'<span style="color:#7ecfff;font-size:11px;">(아이템을 선택하세요)</span>':''}</div>
+        <div class="boss-item-list">`;
+
+      if (items.length === 0) {
+        html += `<div style="font-size:12px;color:#555;text-align:center;padding:12px;">보유한 아이템이 없습니다</div>`;
+      } else {
+        items.forEach(key => {
+          const info = ITEM_INFO[key];
+          if (!info) return;
+          const isUsed = usedItemsThisRound[key];
+          html += `
+            <div class="boss-item-row ${isUsed?'':''}">
+              <div class="boss-item-icon">${info.icon}</div>
+              <div class="boss-item-info">
+                <div class="boss-item-name">${info.name}</div>
+                <div class="boss-item-effect">보스전: ${info.bossEffect}</div>
+              </div>
+              ${isUsed
+                ? `<div class="boss-item-used-badge">사용 완료</div>`
+                : `<button class="boss-item-use-btn" onclick="useBossItem('${key}')">사용</button>`
+              }
+            </div>`;
+        });
+      }
+
+      html += `</div></div>`;
+      return html;
+    }
+
+    function renderScoreGuide() {
+      const rows = POINT_GUIDE.map(g =>
+        `<div class="score-guide-row">
+          <span class="score-guide-label">${g.label}</span>
+          <span class="score-guide-val">${g.val}</span>
+        </div>`
+      ).join('');
+      return `
+        <div class="score-guide">
+          <div class="score-guide-title">⭐ 점수 시스템 안내</div>
+          <div class="score-guide-list">${rows}</div>
+        </div>`;
+    }
+
+    // ── 보스전 액션 선택 ────────────────────────────────────
+    window.selectBossAction = function(action, el) {
+      bossActionSelected = action;
+      // 버튼 상태 업데이트 (재렌더링)
+      renderBossPhase(gameStateData);
+
+      // 마법사가 fate 선택 시 카드 선택 팝업
+      if (action === 'fate' && selectedJob === 'mage') {
+        showFateChoicePopup(true); // isBoss = true
+        return;
+      }
+      if (action === 'fate' && selectedJob !== 'mage') {
+        // 일반 직업은 바로 랜덤 카드 발동 예고
+        // (실제 발동은 제출 후 MC가 처리)
+      }
+    };
+
+    window.submitBossAction = async function() {
+      if (!bossActionSelected || !myTeamId) return;
+      // skip 사용 시 bossSkipUsed 플래그 저장
+      if (bossActionSelected === 'skip') {
+        await update(ref(db, `teams/${myTeamId}`), { bossSkipUsed: true });
+      }
+      await update(ref(db, 'gameState/selections'), { [myTeamId]: 'quest' });
+      await update(ref(db, 'gameState/bossSelections'), { [myTeamId]: bossActionSelected });
+      await update(ref(db, `teams/${myTeamId}/bossRoundData`), {
+        action: bossActionSelected,
+        usedItems: usedItemsThisRound,
+        ts: Date.now()
+      });
+      bossActionSubmitted = true;
+      renderBossPhase(gameStateData);
+    };
+
+    // ── 아이템 사용 (보스전) ────────────────────────────────
+    window.useBossItem = async function(itemKey) {
+      if (usedItemsThisRound[itemKey]) return;
+      if (!confirm(`"${ITEM_INFO[itemKey]?.name}" 아이템을 사용하시겠습니까?`)) return;
+
+      usedItemsThisRound[itemKey] = true;
+
+      // Firebase에 아이템 사용 기록
+      const updateData = { [itemKey]: false }; // 아이템 소모
+      await update(ref(db, `teams/${myTeamId}`), updateData);
+      await update(ref(db, `gameState/bossItemUsed/${myTeamId}`), { [itemKey]: true, ts: Date.now() });
+
+      // 보스 데미지 보너스 즉시 적용
+      if (itemKey === 'bonusBossDmg' && myTeamData.bonusBossDmg) {
+        const newDmg = (myTeamData.bossDamage || 0) + myTeamData.bonusBossDmg;
+        await update(ref(db, `teams/${myTeamId}`), { bossDamage: newDmg, bonusBossDmg: 0 });
+      }
+
+      renderBossPhase(gameStateData);
+    };
+
+    // ── 운명카드 선택 팝업 (마법사 전용) ───────────────────
+    function showFateChoicePopup(isBoss = false) {
+      // 랜덤 2장 뽑기
+      const shuffled = [...FATE_CARDS].sort(() => Math.random()-0.5);
+      const two = shuffled.slice(0, 2);
+
+      const row = document.getElementById('fateCardsRow');
+      row.innerHTML = two.map(card => `
+        <div class="fate-card-choice" onclick="chooseFateCard('${card.key}','${isBoss}')">
+          <div class="fate-card-icon">${card.icon}</div>
+          <div class="fate-card-name">${card.name}</div>
+          <div class="fate-card-effect">${card.effect}</div>
+          <div style="margin-top:8px;font-size:10px;color:#2ecc71;">${card.points}</div>
+        </div>`).join('');
+
+      document.getElementById('fateChoiceOverlay').classList.add('show');
+    }
+
+    window.chooseFateCard = async function(cardKey, isBoss) {
+      document.getElementById('fateChoiceOverlay').classList.remove('show');
+      // 선택한 카드를 Firebase에 기록
+      if (isBoss === 'true') {
+        // 보스전 운명카드: selections에도 quest로 기록 (admin이 처리할 수 있게)
+        await update(ref(db, 'gameState/selections'), { [myTeamId]: 'quest' });
+        await update(ref(db, `gameState/bossSelections`), { [myTeamId]: 'fate' });
+        await update(ref(db, `teams/${myTeamId}/bossRoundData`), { action:'fate', fateCard: cardKey, ts: Date.now() });
+        bossActionSubmitted = true;
+      } else {
+        await update(ref(db, 'gameState/selections'), { [myTeamId]: 'fate' });
+        await update(ref(db, `teams/${myTeamId}/fateCard`), { card: cardKey, ts: Date.now() });
+      }
+      renderBossPhase(gameStateData);
+    };
+
+    // ── 일반 라운드 액션 카드 렌더링 ───────────────────────
     function renderActions() {
       const isPirate = selectedJob==='pirate';
       const lvl      = myTeamData.itemLevel||0;
@@ -773,7 +1239,6 @@
         const clickHandler  = a.disabled ? '' : `selectAction('${a.key}')`;
         const ctxHandler    = a.disabled ? '' : `showDetail('${a.key}')`;
         const touchHandler  = a.disabled ? '' : `startHold('${a.key}',event)`;
-        const cardStyle     = a.disabled ? 'opacity:0.4;cursor:not-allowed;' : '';
         const cardClass     = ['action-card', a.pirate?'pirate-action':'', a.disabled?'disabled-card':''].join(' ');
         const innerContent  = a.disabled
           ? `<div style="font-size:11px;color:#e74c3c;margin-top:4px;">🚫 ${a.disabledMsg}</div>`
@@ -785,16 +1250,28 @@
           <div class="${cardClass}" onclick="${clickHandler}"
             oncontextmenu="event.preventDefault();${ctxHandler}"
             ontouchstart="${touchHandler}"
-            ontouchend="cancelHold()" ontouchmove="cancelHold()"
-            style="${cardStyle}">
+            ontouchend="cancelHold()" ontouchmove="cancelHold()">
             <div class="action-icon">${a.icon}</div>
             <div class="action-name">${a.name}</div>
             ${innerContent}
           </div>`;
       }).join('');
 
-
+      // 마법사 운명카드 클릭 시 팝업
+      if (selectedJob === 'mage') {
+        // fate 카드 클릭을 가로채서 팝업 표시
+        document.querySelectorAll('.action-card').forEach(card => {
+          const origClick = card.getAttribute('onclick');
+          if (origClick && origClick.includes("selectAction('fate')")) {
+            card.setAttribute('onclick', "openFateForMage()");
+          }
+        });
+      }
     }
+
+    window.openFateForMage = function() {
+      showFateChoicePopup(false);
+    };
 
     window.selectAction = function(action) {
       if (!myTeamId) return;
@@ -820,7 +1297,7 @@
         content=`<div class="detail-section"><div class="detail-section-title">성공 확률</div>
           <div class="prob-bar-wrap"><div class="prob-bar-bg"><div class="prob-bar-fill" style="width:${prob}%;background:#ffd700;"></div></div><div class="prob-pct">${prob}%</div></div></div>
           <div class="detail-section"><div class="detail-section-title">시나리오</div>
-          <div class="scenario-box success"><div class="scenario-label val-green">✅ 성공하면</div>${minG.toLocaleString()}~${maxG.toLocaleString()} 골드 획득</div>
+          <div class="scenario-box success"><div class="scenario-label val-green">✅ 성공하면</div>${minG.toLocaleString()}~${maxG.toLocaleString()} 골드 + ⭐5점 획득</div>
           <div class="scenario-box fail"><div class="scenario-label val-red">❌ 실패하면</div>골드 없음${selectedJob==='healer'?'<br>💡 힐러: 부활 스킬로 재도전 가능!':''}</div></div>`;
       } else if (key==='enhance') {
         const prob=lvl>=5?0:Math.round(ENHANCE_PROB[lvl+1]*100);
@@ -830,17 +1307,17 @@
           <div class="detail-row"><span class="detail-row-label">필요 골드</span><span class="${gold<cost?'val-red':'val-green'}">${cost.toLocaleString()}</span></div>
           <div class="detail-row"><span class="detail-row-label">성공 확률</span><span class="val-yellow">${prob}%</span></div></div>
           <div class="prob-bar-wrap"><div class="prob-bar-bg"><div class="prob-bar-fill" style="width:${prob}%;background:#ffd700;"></div></div><div class="prob-pct">${prob}%</div></div>
-          <div class="scenario-box success"><div class="scenario-label val-green">✅ 성공</div>+${lvl+1}강! 보스 데미지 & 골드 보너스 증가</div>
+          <div class="scenario-box success"><div class="scenario-label val-green">✅ 성공</div>+${lvl+1}강! 보스 데미지 & 골드 보너스 증가${lvl+1>=3?'<br>⭐+3점 획득':''}</div>
           <div class="scenario-box fail"><div class="scenario-label val-red">❌ 실패</div>-${cost.toLocaleString()} 골드${selectedJob==='healer'?`<br>💡 힐러: ${Math.round(cost*0.5).toLocaleString()} 골드 환급!`:''}</div>`;
       } else if (key==='fate') {
         title='🃏 운명카드';
         content=`<div class="detail-section"><div class="detail-section-title">카드 목록 (랜덤 1장, 즉시 발동)</div>
-          <div class="detail-row"><span class="detail-row-label">💰 황금의 축복</span><span class="val-yellow">내 팀 골드 2배</span></div>
-          <div class="detail-row"><span class="detail-row-label">💀 저주의 덫</span><span class="val-red">1위 팀 골드 -20%</span></div>
-          <div class="detail-row"><span class="detail-row-label">🧠 천재의 영감</span><span class="val-blue">다음 퀘스트 자동성공</span></div>
-          <div class="detail-row"><span class="detail-row-label">🦊 부의 이전</span><span class="val-yellow">1위→꼴찌 골드 이전</span></div>
-          <div class="detail-row"><span class="detail-row-label">🔄 전설의 부활</span><span class="val-green">+500 골드</span></div>
-          <div class="detail-row"><span class="detail-row-label">🎲 행운의 연속</span><span class="val-green">+300 골드</span></div></div>
+          <div class="detail-row"><span class="detail-row-label">💰 황금의 축복</span><span class="val-yellow">내 팀 골드 2배 +⭐5점</span></div>
+          <div class="detail-row"><span class="detail-row-label">💀 저주의 덫</span><span class="val-red">1위 팀 골드 -20% +⭐3점</span></div>
+          <div class="detail-row"><span class="detail-row-label">🧠 천재의 영감</span><span class="val-blue">다음 퀘스트 자동성공 +⭐5점</span></div>
+          <div class="detail-row"><span class="detail-row-label">🦊 부의 이전</span><span class="val-yellow">1위→꼴찌 골드 이전 +⭐3점</span></div>
+          <div class="detail-row"><span class="detail-row-label">🔄 전설의 부활</span><span class="val-green">+500 골드 +⭐2점</span></div>
+          <div class="detail-row"><span class="detail-row-label">🎲 행운의 연속</span><span class="val-green">+300 골드 +⭐2점</span></div></div>
           ${selectedJob==='mage'?'<div class="scenario-box success"><div class="scenario-label val-green">💡 마법사 보너스</div>2장을 뽑아서 원하는 카드 선택!</div>':''}`;
       } else if (key==='auction') {
         title='🏆 경매 참여';
