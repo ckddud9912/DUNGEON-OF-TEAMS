@@ -672,9 +672,10 @@
     let pendingActionKey = null, holdTimer = null;
     let lastEventTs = null, lastRoundInfoTs = null;
     let auctionBidSubmitted = false;
-    let bossActionSelected = null; // 보스전에서 선택한 액션
+    let bossActionSelected = null;  // 보스전에서 선택한 액션
     let bossActionSubmitted = false; // 보스전 제출 여부
-    let usedItemsThisRound = {}; // 이번 보스 라운드에 사용한 아이템
+    let usedItemsThisRound = {};    // 이번 보스 라운드에 사용한 아이템
+    let lastBossTurnTs = null;      // 마지막으로 확인한 보스턴 타임스탬프 (새 턴 감지용)
 
     // ── 직업 선택 ───────────────────────────────────────────
     window.selectJob = function(jobKey, el) {
@@ -979,6 +980,15 @@
       const bossSels   = state.bossSelections || {};
       const myBossPick = bossSels[myTeamId];
 
+      // ── 새 턴 감지: bossTurnTs가 바뀌면 자동으로 제출 상태 초기화 ──
+      const currentTurnTs = state.bossTurnTs || null;
+      if (currentTurnTs !== lastBossTurnTs) {
+        lastBossTurnTs     = currentTurnTs;
+        bossActionSelected  = null;
+        bossActionSubmitted = false;
+        usedItemsThisRound  = {};
+      }
+
       // 강화 보너스 (500 기준)
       const lvl         = myTeamData.itemLevel || 0;
       const dmgBonus    = [0, 50, 100, 150, 250, 400][lvl] || 0;
@@ -1010,7 +1020,8 @@
             </div>
           </div>`;
 
-      if (myBossPick && bossActionSubmitted) {
+      // myBossPick: Firebase에 내 선택이 기록됐으면 제출 완료로 표시
+      if (myBossPick) {
         const actionLabel = { attack:'공격하기', item:'아이템 사용', skip:'한 턴 쉬기' };
         const actionIcon  = { attack:'⚔️', item:'✨', skip:'😴' };
         html += `

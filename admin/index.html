@@ -133,17 +133,36 @@
 
     /* 보스전 컨트롤 강조 */
     .boss-ctrl-btn {
-      flex: 1; min-width: 80px; padding: 14px 8px;
+      flex: 1; min-width: 76px; padding: 12px 6px;
       border: none; border-radius: 10px;
-      font-size: 13px; font-weight: bold; cursor: pointer;
+      font-size: 12px; font-weight: bold; cursor: pointer;
       text-align: center; line-height: 1.4;
       transition: all 0.15s;
     }
     .boss-ctrl-btn:hover { transform: scale(1.04); opacity: 0.9; }
-    .bcb-attack  { background: #e74c3c; color: white; }
-    .bcb-skip    { background: #555;    color: white; }
-    .bcb-miss    { background: #3498db; color: white; }
-    .bcb-counter { background: #9b59b6; color: white; }
+    .bcb-attack-ok  { background: #2ecc71; color: white; }
+    .bcb-attack-fail{ background: #e74c3c; color: white; }
+    .bcb-skip       { background: #555;    color: white; }
+    .bcb-miss       { background: #3498db; color: white; }
+    .bcb-counter    { background: #9b59b6; color: white; }
+
+    /* 보스전 아이템 현황 */
+    .boss-item-row-admin {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 10px; background: #0f0f1a;
+      border: 1px solid #333; border-radius: 6px;
+      font-size: 11px; margin-bottom: 4px;
+    }
+    .boss-item-row-admin.item-used { border-color: #2ecc7155; background: #0a1a0a; }
+    .boss-item-used-tag {
+      margin-left: auto; font-size: 10px;
+      background: #2ecc7133; color: #2ecc71;
+      border: 1px solid #2ecc7155; border-radius: 4px;
+      padding: 1px 6px;
+    }
+
+    /* 보스전 섹션 강조 테두리 */
+    #bossSection { border-color: #e74c3c55; }
   </style>
 </head>
 <body>
@@ -252,38 +271,60 @@
   </div>
 
   <!-- 보스전 -->
-  <div class="section" id="bossSection" style="display:none;">
-    <div class="section-title">👹 보스전 관리</div>
+  <div class="section" id="bossSection" style="display:none;border-color:#e74c3c55;">
+    <div class="section-title" style="color:#ff8888;">👹 보스전 컨트롤</div>
 
     <!-- 보스 HP 바 -->
     <div class="boss-hp-bar"><div class="boss-hp-fill" id="bossHpFill" style="width:100%"></div></div>
     <div class="boss-hp-text" id="bossHpText">HP: - / -</div>
-    <div style="font-size:11px;color:#aaa;margin-top:4px;margin-bottom:12px;">
+    <div style="font-size:11px;color:#aaa;margin-top:4px;margin-bottom:10px;">
       기본 공격: 500 + 강화 보너스 | 보스 최대 HP: 20,000
     </div>
 
-    <!-- 팀별 행동 선택 현황 -->
-    <div style="font-size:11px;color:#ffd700;font-weight:bold;margin-bottom:6px;">⚔️ 팀별 행동 선택 현황</div>
-    <div id="bossSelGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;margin-bottom:14px;"></div>
+    <!-- ① 팀별 행동 선택 현황 (클릭해서 선택) -->
+    <div style="font-size:11px;color:#ffd700;font-weight:bold;margin-bottom:6px;">① 팀 카드를 눌러 처리할 팀 선택</div>
+    <div id="bossSelGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;margin-bottom:12px;"></div>
 
-    <!-- 현재 처리 중인 팀 -->
-    <div class="judge-team-box">
-      <div class="judge-team-name"   id="bossJudgeTeamName">대기 중...</div>
-      <div class="judge-team-action" id="bossJudgeTeamAction">팀을 선택하거나 다음팀 버튼을 누르세요</div>
-      <div class="judge-team-gold"   id="bossJudgeTeamGold"></div>
+    <!-- ② 선택된 팀 정보 -->
+    <div class="judge-team-box" id="bossTeamBox" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div class="judge-team-name"   id="bossJudgeTeamName">대기 중...</div>
+          <div class="judge-team-action" id="bossJudgeTeamAction"></div>
+          <div class="judge-team-gold"   id="bossJudgeTeamGold"></div>
+        </div>
+        <button class="btn btn-gray btn-sm" onclick="clearBossTeam()" style="margin-left:8px;">✕ 취소</button>
+      </div>
+      <!-- 이 팀의 아이템 현황 -->
+      <div id="bossTeamItems" style="margin-top:8px;"></div>
     </div>
 
-    <!-- 보스전 전용 컨트롤 버튼 -->
-    <div style="font-size:11px;color:#aaa;margin-bottom:8px;">선택한 팀의 결과를 처리하세요</div>
-    <div class="btn-row" style="gap:8px;">
-      <button class="boss-ctrl-btn bcb-attack"  onclick="bossTurnAction('attack')">⚔️<br>공격하기<br><span style="font-size:10px;opacity:0.8;">HP 차감</span></button>
-      <button class="boss-ctrl-btn bcb-skip"    onclick="bossTurnAction('skip')">😴<br>한턴쉬기<br><span style="font-size:10px;opacity:0.8;">패널티 없음</span></button>
-      <button class="boss-ctrl-btn bcb-miss"    onclick="bossTurnAction('miss')">❌<br>MISS<br><span style="font-size:10px;opacity:0.8;">공격 빗나감</span></button>
-      <button class="boss-ctrl-btn bcb-counter" onclick="bossTurnAction('counter')">🔥<br>보스반격<br><span style="font-size:10px;opacity:0.8;">-2pt 차감</span></button>
+    <!-- ③ 처리 버튼 (팀 선택 시만 표시) -->
+    <div id="bossCtrlBtns" style="display:none;">
+      <div style="font-size:11px;color:#aaa;margin-bottom:8px;">② 결과를 선택하세요</div>
+
+      <!-- 공격 성공/실패 -->
+      <div style="font-size:11px;color:#888;margin-bottom:4px;">공격 결과</div>
+      <div class="btn-row" style="gap:8px;margin-bottom:10px;">
+        <button class="boss-ctrl-btn bcb-attack-ok"   onclick="bossTurnAction('attack_ok')">
+          ✅<br>공격 성공<br><span style="font-size:10px;opacity:0.8;">HP -<span id="bossCtrlDmgLabel">500</span></span>
+        </button>
+        <button class="boss-ctrl-btn bcb-attack-fail" onclick="bossTurnAction('attack_fail')">
+          ❌<br>공격 실패<br><span style="font-size:10px;opacity:0.8;">HP 변동 없음</span>
+        </button>
+      </div>
+
+      <!-- 기타 -->
+      <div style="font-size:11px;color:#888;margin-bottom:4px;">기타</div>
+      <div class="btn-row" style="gap:8px;">
+        <button class="boss-ctrl-btn bcb-skip"    onclick="bossTurnAction('skip')">😴<br>한턴쉬기<br><span style="font-size:10px;opacity:0.8;">패널티 없음</span></button>
+        <button class="boss-ctrl-btn bcb-miss"    onclick="bossTurnAction('miss')">💨<br>MISS<br><span style="font-size:10px;opacity:0.8;">빗나감</span></button>
+        <button class="boss-ctrl-btn bcb-counter" onclick="bossTurnAction('counter')">🔥<br>보스반격<br><span style="font-size:10px;opacity:0.8;">-2pt</span></button>
+      </div>
     </div>
 
     <!-- HP 수동 조정 -->
-    <div style="margin-top:10px;padding-top:10px;border-top:1px solid #333;">
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid #333;">
       <div style="font-size:11px;color:#aaa;margin-bottom:6px;">HP 수동 조정</div>
       <div class="gold-adj">
         <input type="number" id="bossHpAdj" value="500">
@@ -474,21 +515,25 @@
     }
 
     // ── 보스전 선택 현황 그리드 ──
+    // ── 보스전 팀 카드 그리드 렌더링 ──
     function renderBossSelGrid() {
-      const bossSels = gameState.bossSelections || {};
+      const bossSels  = gameState.bossSelections || {};
+      const bossItems = gameState.bossItemUsed   || {}; // player가 아이템 사용 시 여기에 기록됨
       const teams = Object.entries(teamsData);
       const actionLabel = { attack:'⚔️ 공격', item:'✨ 아이템', skip:'😴 쉬기' };
       const actionCls   = { attack:'bsc-attack', item:'bsc-item', skip:'bsc-skip' };
 
       document.getElementById('bossSelGrid').innerHTML = teams.map(([id, t]) => {
-        const choice = bossSels[id];
+        const choice   = bossSels[id];
         const isActive = id === bossCurrentTid;
+        const usedItem = bossItems[id] ? '✨' : '';
         return `<div class="boss-sel-card ${actionCls[choice]||''} ${isActive?'bsc-active':''}"
           onclick="setBossCurrentTeam('${id}')">
           <div class="bsc-team">${JOB_ICONS[t.job]||'❓'} ${t.name}</div>
           <div class="bsc-choice ${choice==='attack'?'atk':choice==='item'?'itm':choice==='skip'?'skp':''}">
             ${choice ? actionLabel[choice] : '⏳ 대기 중'}
           </div>
+          ${usedItem ? `<div style="font-size:10px;color:#d98df5;margin-top:2px;">✨ 아이템 사용</div>` : ''}
         </div>`;
       }).join('');
     }
@@ -498,66 +543,115 @@
       bossCurrentTid = tid;
       const team = teamsData[tid];
       if (!team) return;
-      document.getElementById('bossJudgeTeamName').textContent =
-        `${JOB_ICONS[team.job]||'❓'} ${team.name} (${JOB_NAMES[team.job]||'?'})`;
+
       const bossSels = gameState.bossSelections || {};
       const choice   = bossSels[tid];
-      const actionLabel = { attack:'⚔️ 공격하기 선택', item:'✨ 아이템 사용 선택', skip:'😴 한 턴 쉬기 선택' };
-      document.getElementById('bossJudgeTeamAction').textContent =
-        choice ? actionLabel[choice] || choice : '⏳ 아직 선택 안 함';
+      const choiceLabel = { attack:'⚔️ 공격하기 선택', item:'✨ 아이템 사용 선택', skip:'😴 한 턴 쉬기 선택' };
       const dmg = BASE_BOSS_DMG + (BOSS_ENHANCE_BONUS[team.itemLevel||0]||0) + (team.bonusBossDmg||0);
+
+      // 팀 정보 표시
+      document.getElementById('bossJudgeTeamName').textContent =
+        `${JOB_ICONS[team.job]||'❓'} ${team.name} (${JOB_NAMES[team.job]||'?'})`;
+      document.getElementById('bossJudgeTeamAction').textContent =
+        choice ? choiceLabel[choice] || choice : '⏳ 아직 선택 안 함';
       document.getElementById('bossJudgeTeamGold').textContent =
-        `골드: ${(team.gold||0).toLocaleString()} | 누적 데미지: ${(team.bossDamage||0).toLocaleString()} | 공격 시 데미지: ${dmg}`;
+        `골드 ${(team.gold||0).toLocaleString()} | 누적 데미지 ${(team.bossDamage||0).toLocaleString()} | 이번 공격 ${dmg}`;
+
+      // 아이템 현황 표시
+      const itemKeys = ['autoQuest','questMultiplier','enhanceShield','plunderShield','bonusBossDmg','fateBonus'];
+      const itemNames = { autoQuest:'⚡자동성공', questMultiplier:'🎯골드배율', enhanceShield:'🛡강화방패', plunderShield:'🧿약탈방지', bonusBossDmg:'💥보스부스터', fateBonus:'🎲운명추가' };
+      const bossItemUsed = (gameState.bossItemUsed || {})[tid] || {};
+      const itemRows = itemKeys.filter(k => team[k]).map(k => {
+        const used = bossItemUsed[k];
+        return `<div class="boss-item-row-admin ${used?'item-used':''}">
+          <span>${itemNames[k]||k}</span>
+          ${used ? '<span class="boss-item-used-tag">✅ 사용 완료</span>' : '<span style="margin-left:auto;font-size:10px;color:#aaa;">보유 중</span>'}
+        </div>`;
+      });
+      document.getElementById('bossTeamItems').innerHTML =
+        itemRows.length
+          ? `<div style="font-size:10px;color:#aaa;margin-bottom:4px;">보유 아이템</div>${itemRows.join('')}`
+          : `<div style="font-size:11px;color:#555;">보유 아이템 없음</div>`;
+
+      // 데미지 라벨 업데이트
+      const dmgLabel = document.getElementById('bossCtrlDmgLabel');
+      if (dmgLabel) dmgLabel.textContent = dmg;
+
+      // 팀 박스 & 컨트롤 버튼 표시
+      document.getElementById('bossTeamBox').style.display  = 'block';
+      document.getElementById('bossCtrlBtns').style.display = 'block';
+
+      renderBossSelGrid();
+    };
+
+    // ── 보스전 팀 선택 취소 ──
+    window.clearBossTeam = function() {
+      bossCurrentTid = null;
+      document.getElementById('bossTeamBox').style.display  = 'none';
+      document.getElementById('bossCtrlBtns').style.display = 'none';
       renderBossSelGrid();
     };
 
     // ── 보스전 턴 처리 ──
     window.bossTurnAction = async function(actionType) {
-      if (!bossCurrentTid) { alert('처리할 팀을 선택하세요! (팀 카드를 눌러주세요)'); return; }
+      if (!bossCurrentTid) { alert('팀 카드를 먼저 눌러 선택하세요!'); return; }
       const team = teamsData[bossCurrentTid];
       if (!team) return;
 
-      const dmg = BASE_BOSS_DMG + (BOSS_ENHANCE_BONUS[team.itemLevel||0]||0) + (team.bonusBossDmg||0);
+      const dmg   = BASE_BOSS_DMG + (BOSS_ENHANCE_BONUS[team.itemLevel||0]||0) + (team.bonusBossDmg||0);
       const curHP = gameState.bossHP || 0;
 
-      if (actionType === 'attack') {
-        const newHP   = Math.max(0, curHP - dmg);
-        const newDmg  = (team.bossDamage || 0) + dmg;
+      if (actionType === 'attack_ok') {
+        // 공격 성공 — HP 차감 + 누적 데미지 기록
+        const newHP  = Math.max(0, curHP - dmg);
+        const newDmg = (team.bossDamage || 0) + dmg;
         await update(ref(db, `teams/${bossCurrentTid}`), { bossDamage: newDmg });
         await update(ref(db, 'gameState'), {
           bossHP: newHP,
-          lastEvent: { type:'boss_attack', icon:'💥', title:`${team.name} 공격!`, msg:`-${dmg} 데미지! 보스 HP: ${newHP.toLocaleString()}`, dmg, ts: Date.now() }
+          lastEvent: { type:'boss_attack', icon:'💥', title:`${team.name} 공격 성공!`, msg:`-${dmg} 데미지! 보스 HP: ${newHP.toLocaleString()}`, dmg, ts: Date.now() }
         });
-        addLog(`${team.name} 공격 -${dmg}DMG (남은HP:${newHP.toLocaleString()})`, 'ok');
-        if (newHP <= 0) { addLog('🎉 보스 처치!', 'sys'); }
+        addLog(`✅ ${team.name} 공격 성공 -${dmg}DMG (남은HP: ${newHP.toLocaleString()})`, 'ok');
+        if (newHP <= 0) { addLog('🎉 보스 처치!!!!', 'sys'); }
+
+      } else if (actionType === 'attack_fail') {
+        // 공격 실패 — HP 변동 없음
+        await update(ref(db, 'gameState'), {
+          lastEvent: { type:'boss_miss', icon:'❌', title:`${team.name} 공격 실패!`, msg:'공격이 통하지 않았습니다!', ts: Date.now() }
+        });
+        addLog(`❌ ${team.name} 공격 실패 (HP 변동 없음)`, 'err');
 
       } else if (actionType === 'skip') {
         await update(ref(db, 'gameState'), {
-          lastEvent: { type:'boss_skip', icon:'😴', title:`${team.name} 한 턴 쉬기`, msg:'이번 턴 패스!', ts: Date.now() }
+          lastEvent: { type:'boss_skip', icon:'😴', title:`${team.name} 한 턴 쉬기`, msg:'이번 턴 패스! 다음 턴을 노려보세요.', ts: Date.now() }
         });
-        addLog(`${team.name} 한 턴 쉬기`, 'sys');
+        addLog(`😴 ${team.name} 한 턴 쉬기`, 'sys');
 
       } else if (actionType === 'miss') {
         await update(ref(db, 'gameState'), {
-          lastEvent: { type:'boss_miss', icon:'❌', title:`${team.name} MISS!`, msg:'공격이 빗나갔습니다!', ts: Date.now() }
+          lastEvent: { type:'boss_miss', icon:'💨', title:`${team.name} MISS!`, msg:'공격이 빗나갔습니다!', ts: Date.now() }
         });
-        addLog(`${team.name} MISS`, 'err');
+        addLog(`💨 ${team.name} MISS`, 'err');
 
       } else if (actionType === 'counter') {
         const newPt = Math.max(0, (team.points || 0) - 2);
         await update(ref(db, `teams/${bossCurrentTid}`), { points: newPt });
         await update(ref(db, 'gameState'), {
-          lastEvent: { type:'boss_counter', icon:'🔥', title:`보스 반격! ${team.name}`, msg:`${team.name} -2pt! (${newPt}pt)`, ts: Date.now() }
+          lastEvent: { type:'boss_counter', icon:'🔥', title:`🔥 보스 반격! ${team.name}`, msg:`${team.name} -2pt 차감! (현재 ${newPt}pt)`, ts: Date.now() }
         });
-        addLog(`보스 반격! ${team.name} -2pt`, 'err');
+        addLog(`🔥 보스 반격! ${team.name} -2pt`, 'err');
       }
 
-      // 처리 후 다음 팀으로 자동 이동 (선택 사항)
-      bossCurrentTid = null;
-      renderBossSelGrid();
-      document.getElementById('bossJudgeTeamName').textContent   = '처리 완료 — 다음 팀을 선택하세요';
-      document.getElementById('bossJudgeTeamAction').textContent = '위 팀 카드를 눌러 선택하세요';
-      document.getElementById('bossJudgeTeamGold').textContent   = '';
+      // ── 처리 완료 → Firebase bossSelections에서 이 팀 항목 제거 + bossTurnTs 갱신 ──
+      // bossTurnTs가 바뀌면 플레이어 화면이 자동으로 다음 턴 입력 화면으로 전환됨
+      try {
+        const snap = await get(ref(db, 'gameState/bossSelections'));
+        const sels = snap.val() || {};
+        delete sels[bossCurrentTid];
+        await set(ref(db, 'gameState/bossSelections'), Object.keys(sels).length ? sels : null);
+        await update(ref(db, 'gameState'), { bossTurnTs: Date.now() });
+      } catch(e) { addLog(`bossSelections 초기화 오류: ${e.message}`, 'err'); }
+
+      clearBossTeam();
     };
 
     // ── HP 수동 조정 ──
@@ -871,20 +965,31 @@
 
     // ── 보스전 시작 ── (HP 20,000 고정)
     window.startBoss = function() {
-      update(ref(db,'gameState'),{phase:'boss', bossHP:BOSS_MAX_HP, bossHPMax:BOSS_MAX_HP, selections:null, bossSelections:null});
-      document.getElementById('bossSection').style.display='block';
-      document.getElementById('finalSection').style.display='block';
+      update(ref(db,'gameState'),{phase:'boss', bossHP:BOSS_MAX_HP, bossHPMax:BOSS_MAX_HP, selections:null, bossSelections:null, bossItemUsed:null});
+      document.getElementById('bossSection').style.display  = 'block';
+      document.getElementById('finalSection').style.display = 'block';
+      document.getElementById('bossTeamBox').style.display  = 'none';
+      document.getElementById('bossCtrlBtns').style.display = 'none';
+      bossCurrentTid = null;
       broadcastRoundInfo(6);
-      addLog(`보스전 시작! HP: ${BOSS_MAX_HP.toLocaleString()}`,'sys');
+      addLog(`👹 보스전 시작! HP: ${BOSS_MAX_HP.toLocaleString()}`,'sys');
     };
 
     function updateBossSection() {
-      if (gameState.phase!=='boss') return;
-      document.getElementById('bossSection').style.display='block';
-      document.getElementById('finalSection').style.display='block';
-      const hp=gameState.bossHP||0, max=gameState.bossHPMax||BOSS_MAX_HP;
-      document.getElementById('bossHpFill').style.width=Math.max(0,(hp/max)*100)+'%';
-      document.getElementById('bossHpText').textContent=`HP: ${hp.toLocaleString()} / ${max.toLocaleString()}`;
+      const isBoss = gameState.phase === 'boss';
+      // 보스전이면 항상 섹션 표시 (새로고침해도 유지)
+      document.getElementById('bossSection').style.display  = isBoss ? 'block' : 'none';
+      document.getElementById('finalSection').style.display = isBoss ? 'block' : 'none';
+      if (!isBoss) return;
+
+      const hp  = gameState.bossHP    || 0;
+      const max = gameState.bossHPMax || BOSS_MAX_HP;
+      document.getElementById('bossHpFill').style.width = Math.max(0, (hp/max)*100) + '%';
+      document.getElementById('bossHpText').textContent = `HP: ${hp.toLocaleString()} / ${max.toLocaleString()}`;
+      renderBossSelGrid();
+
+      // 현재 선택된 팀이 있으면 정보 갱신
+      if (bossCurrentTid && teamsData[bossCurrentTid]) setBossCurrentTeam(bossCurrentTid);
     }
 
     // ── 경매 ──
